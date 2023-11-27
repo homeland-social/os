@@ -2,6 +2,9 @@ SHELL := /bin/bash
 
 .PHONY: setup-none setup-rpi setup-qemu build build-rpi build-qemu
 
+init:
+	git submodule foreach "git submodule init"
+
 setup-none:
 	rm -f build/tmp build/conf/local.conf build/conf/bblayers.conf
 
@@ -29,5 +32,5 @@ build-rpi: setup-rpi build
 
 build-qemu: setup-qemu build
 
-clean:
-	rm -rf build/tmp.rpi/* build/tmp.qemux86-64 build/tmp build/conf/local.conf build/conf/bblayers.conf
+clean: setup-none
+	rm -rf build/tmp.rpi/* build/tmp.qemux86-64

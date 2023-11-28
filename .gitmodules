@@ -14,3 +14,7 @@
 	path = meta-openembedded
 	url = git://git.openembedded.org/meta-openembedded
 	branch = kirkstone
+[submodule "meta-embedded-containers"]
+	path = meta-embedded-containers
+	url = git@github.com:homeland-social/meta-embedded-containers.git
+	branch = kirkstone

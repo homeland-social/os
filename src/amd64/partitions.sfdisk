@@ -1,0 +1,10 @@
+label: dos
+label-id: 0x5c68700a
+device: /dev/loop43
+unit: sectors
+sector-size: 512
+
+/dev/loop43p1 : start=        2048, size=    33554432, type=83
+/dev/loop43p2 : start=    33556480, size=   805306368, type=83
+/dev/loop43p3 : start=   838862848, size=   805306368, type=83
+/dev/loop43p4 : start=   838862848, size=            , type=83

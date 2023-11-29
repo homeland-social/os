@@ -1,36 +1,34 @@
-SHELL := /bin/bash
+ARCH ?= amd64
+DOCKER_ARCH ?= ${ARCH}/
+ALPINE_VERSION ?= 3.18
+KERNEL_IMAGE ?= linux-virt
+BUILDER_NAME = homeland-os-builder
 
-.PHONY: setup-none setup-rpi setup-qemu build build-rpi build-qemu
+.PHONY: build builder out/disk.img
 
-init:
-	git submodule foreach "git submodule init"
+clean-image:
+	docker image rm --force ${BUILDER_NAME}
 
-setup-none:
-	rm -f build/tmp build/conf/local.conf build/conf/bblayers.conf
+builder: clean-image
+	docker build --build-arg ARCH=${ARCH} \
+		--build-arg DOCKER_ARCH=${DOCKER_ARCH} \
+		--build-arg ALPINE_VERSION=${ALPINE_VERSION} \
+		-t ${BUILDER_NAME} .
 
-setup-rpi: setup-none
-	mkdir -p build/tmp.rpi
-	cd build && \
-		ln -sf tmp.rpi tmp
-	cd build/conf && \
-		ln -sf bblayers.conf.rpi bblayers.conf && \
-		ln -sf local.conf.rpi local.conf
+out/rootfs.tar.gz:
+	sudo docker run --runtime=sysbox-runc -ti \
+		-e KERNEL_IMAGE=${KERNEL_IMAGE} \
+		-v ${PWD}/src:/var/lib/homeland/src \
+		-v ${PWD}/out:/var/lib/homeland/out ${BUILDER_NAME} /var/lib/homeland/src/mkrootfs.sh
 
-setup-qemu: setup-none
-	mkdir -p build/tmp.qemux86-64
-	cd build && \
-		ln -sf tmp.qemux86-64 tmp
-	cd build/conf && \
-		ln -sf bblayers.conf.qemux86-64 bblayers.conf && \
-		ln -sf local.conf.qemux86-64 local.conf
+out/disk.img:
+	sudo docker run --privileged --cap-add=CAP_MKNOD -ti \
+		-e KERNEL_IMAGE=${KERNEL_IMAGE} \
+		-v ${PWD}/src:/var/lib/homeland/src \
+		-v ${PWD}/out:/var/lib/homeland/out ${BUILDER_NAME} /var/lib/homeland/src/mkimage.sh
 
-build:
-	source poky/oe-init-build-env build && \
-		bitbake core-image-minimal
+out/disk.vdi:
+	qemu-img convert -f raw -O vdi out/disk.img out/disk.vdi
 
-build-rpi: setup-rpi build
-
-build-qemu: setup-qemu build
-
-clean: setup-none
-	rm -rf build/tmp.rpi/* build/tmp.qemux86-64
+out/disk.qcow2:
+	qemu-img convert -f raw -O qcow2 out/disk.img out/disk.qcow2

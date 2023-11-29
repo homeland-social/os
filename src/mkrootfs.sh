@@ -26,8 +26,9 @@ nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOF
 
-# Append to /etc/fstab
+# Append to /etc files
 [ -f ${SRC}/${ARCH}/fstab.append ] && cat ${SRC}/${ARCH}/fstab.append >> ${ROOT}/etc/fstab
+[ -f ${SRC}/${ARCH}/modules.append ] && cat ${SRC}/${ARCH}/modules.append >> ${ROOT}/etc/modules
 
 # Set up networking (and symlink allowing /etc/network/interfaces to be writable)
 mkdir -p ${ROOT}/data/links_/etc/network

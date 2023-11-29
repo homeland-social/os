@@ -32,3 +32,6 @@ out/disk.vdi:
 
 out/disk.qcow2:
 	qemu-img convert -f raw -O qcow2 out/disk.img out/disk.qcow2
+
+clean:
+	rm -rf out/*

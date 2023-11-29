@@ -1,0 +1,12 @@
+ARCH=${ARCH}
+ALPINE_VERSION=3.18
+ALPINE_MIRROR=http://dl-cdn.alpinelinux.org/alpine/
+
+BOARD_NAME="virt"
+NET_WIFI=yes
+# Install packages in addition to BASE_PACKAGES,
+# NOTE: BASE_PACKAGES == alpine-base linux-${BOARD_NAME} grub
+# NOTE: iwd is installed if NET_WIFI == yes.
+PACKAGES_INSTALL="docker-engine"
+SERVICES_ENABLE="networking docker"
+DOCKER_PULL = "busybox:latest"

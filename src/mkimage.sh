@@ -1,5 +1,7 @@
 #!/bin/bash -x
 
+source ${SRC}/config
+
 # Create (2G) disk image
 IMAGE=${OUT}/disk.img
 dd if=/dev/zero of=${IMAGE} bs=3084 count=1048576
@@ -81,14 +83,14 @@ sync
 
 # Add bootloader
 grub-install --target=i386-pc --boot-directory=/tmp/root0/boot --no-floppy ${LOOP}
-cat <<EOF > /tmp/root0/boot/grub/grub.cfg
+cat > /tmp/root0/boot/grub/grub.cfg <<"EOF"
 set timeout=3
 set default=0
 
 menuentry "Homeland social" {
     set root=(hd0,1)
-    linux /vmlinuz-virt root=/dev/sda2 rootfstype=ext4
-    initrd /initramfs-virt
+    linux /vmlinuz-${BOARD_NAME} root=/dev/sda2 rootfstype=ext4
+    initrd /initramfs-${BOARD_NAME}
 }
 EOF
 

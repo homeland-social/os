@@ -1,12 +1,21 @@
 #!/bin/bash -x
 
-BASE_PACKAGES="grub iwd"
+source ${SRC}/config
 
+PACKAGES_INSTALL = "${PACKAGES_INSTALL} alpine-base grub linux-${BOARD_NAME}"
+SERVICES_ENABLE = "${SERVICES_ENABLE} modules"
+
+if [ "NET_WIFI" == "yes" ]; then
+    BASE_PACKAGES = "${BASE_PACKAGES} iwd"
+    SERVICES_ENABLE = "${SERVICES_ENABLE} iwd"
+fi
+
+ROOT=/tmp/root
 mkdir -p ${ROOT}
 
 apk add -U -X ${ALPINE_MIRROR}v${ALPINE_VERSION}/main \
     -X ${ALPINE_MIRROR}v${ALPINE_VERSION}/community \
-    --no-cache --allow-untrusted --initdb -p ${ROOT} ${PACKAGES} ${KERNEL_IMAGE} ${BASE_PACKAGES}
+    --no-cache --allow-untrusted --initdb -p ${ROOT} ${PACKAGES_INSTALL}
 apk del --no-cache -p ${ROOT} --force-broken-world apk-tools
 
 mkdir -p ${ROOT}/var/lib/homeland/
@@ -38,40 +47,39 @@ EOF
 cd ${ROOT}/etc/network
 
 # Enable services
-chroot ${ROOT} /bin/sh <<"EOF"
-ln -sf /data/links_/etc/network/interfaces /etc/network/interfaces
-
-/sbin/rc-update add networking
-/sbin/rc-update add iwd
-/sbin/rc-update add docker
-EOF
-
-# Run dockerd inside the chroot.
-chroot ${ROOT} /usr/bin/dockerd --storage-driver vfs \
-    -H unix:///tmp/docker.sock --pidfile=/tmp/docker.pid > /dev/null 2>&1 &
-
-# Wait for dockerd to start...
-while [ ! -f ${ROOT}/tmp/docker.pid ]; do
-    sleep 0.1
-done
-PID=$(cat ${ROOT}/tmp/docker.pid)
-
-# Pull images from our manifest...
-cat ${ROOT}/var/lib/homeland/container.manifest
-while read -r name tag; do
-    docker -H unix://${ROOT}/tmp/docker.sock pull ${name}:${tag}
-done < ${ROOT}/var/lib/homeland/container.manifest
-
-docker -H unix://${ROOT}/tmp/docker.sock image ls
-
-# Kill dockerd and wait for it to exit.
-kill ${PID} > /dev/null 2>&1
-while kill -0 ${PID} > /dev/null 2>&1; do
-    sleep 0.1
+for servce in ${SERVICES_ENABLE}; do
+    chroot ${ROOT} /sbin/rc-update add ${service}
 done
 
-# Remove some unnecessary directories
-rm -rf ${ROOT}/var/lib/docker/runtimes ${ROOT}/var/lib/docker/tmp ${ROOT}/run/*
+if [ "${DOCKER_PULL}" != "" ]; then
+    # Run dockerd inside the chroot.
+    chroot ${ROOT} /usr/bin/dockerd --storage-driver vfs \
+        -H unix:///tmp/docker.sock --pidfile=/tmp/docker.pid > /dev/null 2>&1 &
+
+    # Wait for dockerd to start...
+    while [ ! -f ${ROOT}/tmp/docker.pid ]; do
+        sleep 0.1
+    done
+    PID=$(cat ${ROOT}/tmp/docker.pid)
+
+    # Pull images and build manifest...
+    echo > ${ROOT}/etc/container.manifest
+    for image_tag in ${DOCKER_PULL}; do
+        docker -H unix://${ROOT}/tmp/docker.sock pull ${image_tag}
+        echo ${image_tag} >> ${ROOT}/etc/container.manifest
+    done
+
+    docker -H unix://${ROOT}/tmp/docker.sock image ls
+
+    # Kill dockerd and wait for it to exit.
+    kill ${PID} > /dev/null 2>&1
+    while kill -0 ${PID} > /dev/null 2>&1; do
+        sleep 0.1
+    done
+
+    # Remove some unnecessary directories
+    rm -rf ${ROOT}/var/lib/docker/runtimes ${ROOT}/var/lib/docker/tmp ${ROOT}/run/*
+fi
 
 # Clean up mounts
 umount ${ROOT}/dev

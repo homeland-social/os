@@ -8,5 +8,6 @@ NET_WIFI=yes
 # NOTE: BASE_PACKAGES == alpine-base linux-${BOARD_NAME} grub
 # NOTE: iwd is installed if NET_WIFI == yes.
 PACKAGES_INSTALL="docker-engine"
-SERVICES_ENABLE="networking docker"
+SERVICES_ENABLE="docker"
+MODULES_LOAD="e1000"
 DOCKER_PULL = "busybox:latest"

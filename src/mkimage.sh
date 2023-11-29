@@ -31,7 +31,9 @@ fi
 # /bin/bash
 
 # Create partitions
-sfdisk ${LOOP} < ${SRC}/${ARCH}/partitions.sfdisk
+if [ -f ${SRC}/${ARCH}/partitions.sfdisk ]; then
+    sfdisk ${LOOP} < ${SRC}/${ARCH}/partitions.sfdisk
+fi
 
 losetup -d ${LOOP}
 if ! kpartx -a -v ${IMAGE}; then

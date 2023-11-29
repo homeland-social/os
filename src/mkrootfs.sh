@@ -3,10 +3,10 @@
 source ${SRC}/config
 
 PACKAGES_INSTALL = "${PACKAGES_INSTALL} alpine-base grub linux-${BOARD_NAME}"
-SERVICES_ENABLE = "${SERVICES_ENABLE} modules"
+SERVICES_ENABLE = "${SERVICES_ENABLE} networking modules"
 
 if [ "NET_WIFI" == "yes" ]; then
-    BASE_PACKAGES = "${BASE_PACKAGES} iwd"
+    PACKAGES_INSTALL = "${PACKAGES_INSTALL} iwd"
     SERVICES_ENABLE = "${SERVICES_ENABLE} iwd"
 fi
 
@@ -30,14 +30,19 @@ mount -o bind /tmp ${ROOT}/tmp
 mkdir -p ${ROOT}/data
 
 # This will be useful
-cat << EOF > ${ROOT}/etc/resolv.conf
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-EOF
+if [ -f ${SRC}/${ARCH}/resolv.conf ]; then
+    cp ${SRC}/${ARCH}/resolv.conf ${ROOT}/etc/resolv.conf
+else
+    echo -n "nameserver 8.8.8.8\nnameserver 8.8.4.4\n" > ${ROOT}/etc/resolv.conf
+fi
 
 # Append to /etc files
 [ -f ${SRC}/${ARCH}/fstab.append ] && cat ${SRC}/${ARCH}/fstab.append >> ${ROOT}/etc/fstab
-[ -f ${SRC}/${ARCH}/modules.append ] && cat ${SRC}/${ARCH}/modules.append >> ${ROOT}/etc/modules
+
+# Append modules for auto-loading
+for mod in ${MODULES_APPEND}; do
+    echo ${mod} >> ${ROOT}/etc/modules
+done
 
 # Set up networking (and symlink allowing /etc/network/interfaces to be writable)
 mkdir -p ${ROOT}/data/links_/etc/network
@@ -51,7 +56,7 @@ for servce in ${SERVICES_ENABLE}; do
     chroot ${ROOT} /sbin/rc-update add ${service}
 done
 
-if [ "${DOCKER_PULL}" != "" ]; then
+if [ ! -z "${DOCKER_PULL}" ]; then
     # Run dockerd inside the chroot.
     chroot ${ROOT} /usr/bin/dockerd --storage-driver vfs \
         -H unix:///tmp/docker.sock --pidfile=/tmp/docker.pid > /dev/null 2>&1 &

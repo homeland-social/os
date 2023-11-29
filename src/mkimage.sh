@@ -28,7 +28,7 @@ if ! losetup ${LOOP} ${IMAGE}; then
     exit 1
 fi
 
-# /bin/bash
+[ ! -z "${HOOK_RUN_AFTER_LOSETUP}" ] && ${HOOK_RUN_AFTER_LOSETUP}
 
 # Create partitions
 if [ -f ${SRC}/${ARCH}/partitions.sfdisk ]; then

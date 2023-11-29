@@ -1,4 +1,5 @@
 SHELL = /bin/bash
+CONFIG ?= config
 
 BUILDER_NAME = homeland-os-builder
 
@@ -8,7 +9,7 @@ clean-image:
 	docker image rm --force ${BUILDER_NAME}
 
 builder: clean-image
-	source src/config && \
+	source src/${CONFIG} && \
 	docker build --build-arg ARCH=${ARCH} \
 		--build-arg DOCKER_ARCH=${ARCH}/ \
 		--build-arg ALPINE_VERSION=${ALPINE_VERSION} \
@@ -16,6 +17,7 @@ builder: clean-image
 
 out/rootfs.tar.gz:
 	sudo docker run --runtime=sysbox-runc -ti \
+		-e CONFIG=${CONFIG} \
 		-e SRC=/var/lib/homeland/src \
 		-e OUT=/var/lib/homeland/out \
 		-v ${PWD}/out:/var/lib/homeland/out \
@@ -24,6 +26,7 @@ out/rootfs.tar.gz:
 
 out/disk.img:
 	sudo docker run --privileged --cap-add=CAP_MKNOD -ti \
+		-e CONFIG=${CONFIG} \
 		-e SRC=/var/lib/homeland/src \
 		-e OUT=/var/lib/homeland/out \
 		-v ${PWD}/out:/var/lib/homeland/out \

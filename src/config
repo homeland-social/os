@@ -11,3 +11,6 @@ PACKAGES_INSTALL="docker-engine"
 SERVICES_ENABLE="docker"
 MODULES_LOAD="e1000"
 DOCKER_PULL = "busybox:latest"
+
+# Hooks:
+HOOK_RUN_AFTER_LOSETUP=""

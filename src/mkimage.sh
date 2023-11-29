@@ -96,8 +96,7 @@ menuentry "Homeland social" {
 }
 EOF
 
-# NOTE: manhole -- comment out following line if not needed
-/bin/bash
+[ ! -z "${HOOK_RUN_BEFORE_UMOUNT}" ] && ${HOOK_RUN_BEFORE_UMOUNT}
 
 # Umount and clean up.
 for mount in /tmp/root0/boot /tmp/root0/data /tmp/root0 /tmp/root1; do

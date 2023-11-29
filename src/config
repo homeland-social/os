@@ -14,7 +14,8 @@ DOCKER_PULL="busybox:latest"
 
 # mkrootfs.sh hooks:
 HOOK_RUN_AFTER_APK=""
-HOOK_RUN_AFTER_FILES="/bin/bash"
+HOOK_RUN_AFTER_FILES=""
 
 # mkimage.sh hooks:
 HOOK_RUN_AFTER_LOSETUP=""
+HOOK_RUN_BEFORE_UMOUNT=""

@@ -10,7 +10,11 @@ NET_WIFI=yes
 PACKAGES_INSTALL="docker-engine"
 SERVICES_ENABLE="docker"
 MODULES_LOAD="e1000"
-DOCKER_PULL = "busybox:latest"
+DOCKER_PULL="busybox:latest"
 
-# Hooks:
+# mkrootfs.sh hooks:
+HOOK_RUN_AFTER_APK=""
+HOOK_RUN_AFTER_FILES="/bin/bash"
+
+# mkimage.sh hooks:
 HOOK_RUN_AFTER_LOSETUP=""

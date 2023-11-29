@@ -2,12 +2,12 @@
 
 source ${SRC}/config
 
-PACKAGES_INSTALL = "${PACKAGES_INSTALL} alpine-base grub linux-${BOARD_NAME}"
-SERVICES_ENABLE = "${SERVICES_ENABLE} networking modules"
+PACKAGES_INSTALL="${PACKAGES_INSTALL} alpine-base grub linux-${BOARD_NAME}"
+SERVICES_ENABLE="${SERVICES_ENABLE} networking modules"
 
 if [ "NET_WIFI" == "yes" ]; then
-    PACKAGES_INSTALL = "${PACKAGES_INSTALL} iwd"
-    SERVICES_ENABLE = "${SERVICES_ENABLE} iwd"
+    PACKAGES_INSTALL="${PACKAGES_INSTALL} iwd"
+    SERVICES_ENABLE="${SERVICES_ENABLE} iwd"
 fi
 
 ROOT=/tmp/root
@@ -18,9 +18,10 @@ apk add -U -X ${ALPINE_MIRROR}v${ALPINE_VERSION}/main \
     --no-cache --allow-untrusted --initdb -p ${ROOT} ${PACKAGES_INSTALL}
 apk del --no-cache -p ${ROOT} --force-broken-world apk-tools
 
+[ -f "${HOOK_RUN_AFTER_APK}" ] && ${HOOK_RUN_AFTER_APK}
+
 mkdir -p ${ROOT}/var/lib/homeland/
 mkdir -p ${ROOT}/data/links_/etc/networking/
-cp ${SRC}/${ARCH}/container.manifest ${ROOT}/var/lib/homeland/
 
 mount -o bind /dev ${ROOT}/dev
 mount -o bind /proc ${ROOT}/proc
@@ -33,7 +34,7 @@ mkdir -p ${ROOT}/data
 if [ -f ${SRC}/${ARCH}/resolv.conf ]; then
     cp ${SRC}/${ARCH}/resolv.conf ${ROOT}/etc/resolv.conf
 else
-    echo -n "nameserver 8.8.8.8\nnameserver 8.8.4.4\n" > ${ROOT}/etc/resolv.conf
+    echo -e "nameserver 8.8.8.8\nnameserver 8.8.4.4\n" > ${ROOT}/etc/resolv.conf
 fi
 
 # Append to /etc files
@@ -52,9 +53,11 @@ EOF
 cd ${ROOT}/etc/network
 
 # Enable services
-for servce in ${SERVICES_ENABLE}; do
+for service in ${SERVICES_ENABLE}; do
     chroot ${ROOT} /sbin/rc-update add ${service}
 done
+
+[ -f "${HOOK_RUN_AFTER_FILES}" ] && ${HOOK_RUN_AFTER_FILES}
 
 if [ ! -z "${DOCKER_PULL}" ]; then
     # Run dockerd inside the chroot.

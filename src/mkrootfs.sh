@@ -1,9 +1,9 @@
 #!/bin/bash -x
 
-source ${SRC}/config
+source ${SRC}/${CONFIG}
 
-PACKAGES_INSTALL="${PACKAGES_INSTALL} alpine-base grub linux-${BOARD_NAME}"
-SERVICES_ENABLE="${SERVICES_ENABLE} networking modules"
+PACKAGES_INSTALL="${PACKAGES_INSTALL} docker-engine alpine-base grub linux-${BOARD_NAME} cloud-utils-growpart e2fsprogs e2fsprogs-extra"
+SERVICES_ENABLE="${SERVICES_ENABLE} networking modules docker containers expand-data"
 
 if [ "NET_WIFI" == "yes" ]; then
     PACKAGES_INSTALL="${PACKAGES_INSTALL} iwd"
@@ -13,15 +13,16 @@ fi
 ROOT=/tmp/root
 mkdir -p ${ROOT}
 
-apk add -U -X ${ALPINE_MIRROR}v${ALPINE_VERSION}/main \
+apk add -U \
+    -X ${ALPINE_MIRROR}v${ALPINE_VERSION}/main \
     -X ${ALPINE_MIRROR}v${ALPINE_VERSION}/community \
+    -X ${ALPINE_MIRROR}v${ALPINE_VERSION}/edge \
     --no-cache --allow-untrusted --initdb -p ${ROOT} ${PACKAGES_INSTALL}
 apk del --no-cache -p ${ROOT} --force-broken-world apk-tools
 
-[ -f "${HOOK_RUN_AFTER_APK}" ] && ${HOOK_RUN_AFTER_APK}
+[ ! -z "${HOOK_RUN_AFTER_APK}" ] && ${HOOK_RUN_AFTER_APK}
 
 mkdir -p ${ROOT}/var/lib/homeland/
-mkdir -p ${ROOT}/data/links_/etc/networking/
 
 mount -o bind /dev ${ROOT}/dev
 mount -o bind /proc ${ROOT}/proc
@@ -29,6 +30,13 @@ mount -o bind /tmp ${ROOT}/tmp
 
 # Create r/w mount point
 mkdir -p ${ROOT}/data
+
+cp ${SRC}/${ARCH}/docker.confd ${ROOT}/etc/conf.d/docker
+cp ${SRC}/${ARCH}/containers.initd ${ROOT}/etc/init.d/containers
+cp ${SRC}/${ARCH}/expand-data.confd ${ROOT}/etc/conf.d/expand-data
+cp ${SRC}/${ARCH}/expand-data.initd ${ROOT}/etc/init.d/expand-data
+chmod +x ${ROOT}/etc/init.d/containers
+chmod +x ${ROOT}/etc/init.d/expand-data
 
 # This will be useful
 if [ -f ${SRC}/${ARCH}/resolv.conf ]; then
@@ -47,17 +55,21 @@ done
 
 # Set up networking (and symlink allowing /etc/network/interfaces to be writable)
 mkdir -p ${ROOT}/data/links_/etc/network
-cat << EOF > ${ROOT}/data/links_/etc/network/interfaces
+cat > ${ROOT}/data/links_/etc/network/interfaces <<EOF
 iface eth0 inet dhcp
 EOF
-cd ${ROOT}/etc/network
+cd ${ROOT}/etc/network && ln -sf /data/links_/etc/network/interfaces interfaces
 
 # Enable services
 for service in ${SERVICES_ENABLE}; do
     chroot ${ROOT} /sbin/rc-update add ${service}
 done
 
-[ -f "${HOOK_RUN_AFTER_FILES}" ] && ${HOOK_RUN_AFTER_FILES}
+# NOTE: this is fixed in alpine 3.19:
+# https://github.com/alpinelinux/aports/commit/3a8f76ba962aca7c4553f3dd138ba5b0edabcb2e
+chroot ${ROOT} /usr/sbin/addgroup -S docker 2> /dev/null
+
+[ ! -z "${HOOK_RUN_AFTER_FILES}" ] && ${HOOK_RUN_AFTER_FILES}
 
 if [ ! -z "${DOCKER_PULL}" ]; then
     # Run dockerd inside the chroot.
@@ -70,12 +82,20 @@ if [ ! -z "${DOCKER_PULL}" ]; then
     done
     PID=$(cat ${ROOT}/tmp/docker.pid)
 
-    # Pull images and build manifest...
-    echo > ${ROOT}/etc/container.manifest
+    # Pull images and build default manifest...
+    echo > /tmp/containers.manifest
     for image_tag in ${DOCKER_PULL}; do
         docker -H unix://${ROOT}/tmp/docker.sock pull ${image_tag}
-        echo ${image_tag} >> ${ROOT}/etc/container.manifest
+        echo ${image_tag} >> /tmp/containers.manifest
     done
+
+    # Use manifest provided in src, otherwise use the default one we generated
+    # in the previous step.
+    if [ -f ${SRC}/${ARCH}/containers.manifest ]; then
+        cp ${SRC}/${ARCH}/containers.manifest ${ROOT}/etc/containers.manifest
+    else
+        cp /tmp/containers.manifest ${ROOT}/etc/containers.manifest
+    fi
 
     docker -H unix://${ROOT}/tmp/docker.sock image ls
 

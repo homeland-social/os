@@ -1,4 +1,8 @@
 # Added at build time using src/${ARCH}/fstab.append
+# /sbin/init just looks at the options for / so we have a dummy entry.
+# the root device changes, so providing a device here does not make sense.
 
-/dev/sda4	/data	ext4	rw 0 0
-overlayfs   /var/lib/docker    overlay   defaults,lowerdir=/var/lib/docker,upperdir=/data/overlay_/var/lib/docker,workdir=/data/work_/var/lib/docker    0   2
+dummy       /               ext4        defaults,ro 0 0
+tmpfs		/var/log		tmpfs		defaults 0 0
+/dev/sda3	/data			ext4		defaults 0 0
+overlayfs	/var/lib/docker	overlay		defaults,lowerdir=/var/lib/docker,upperdir=/data/overlay_/var/lib/docker,workdir=/data/work_/var/lib/docker    0   2

@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-source ${SRC}/config
+source ${SRC}/${CONFIG}
 
 # Create (2G) disk image
 IMAGE=${OUT}/disk.img
@@ -42,39 +42,34 @@ if ! kpartx -a -v ${IMAGE}; then
 fi
 
 # Format partitions
-mkfs.vfat /dev/mapper/${LOOP_NAME}p1
+mkfs.ext4 /dev/mapper/${LOOP_NAME}p1
 mkfs.ext4 /dev/mapper/${LOOP_NAME}p2
-mkfs.ext4 /dev/mapper/${LOOP_NAME}p3
-mkfs.ext4 /dev/mapper/${LOOP_NAME}p4
+mkfs.ext4 -L DATA /dev/mapper/${LOOP_NAME}p3
 
-# Mount boot and root
+# Mount both roots
 mkdir -p /tmp/root0
 mkdir -p /tmp/root1
 
-if ! mount /dev/mapper/${LOOP_NAME}p2 /tmp/root0; then
+if ! mount /dev/mapper/${LOOP_NAME}p1 /tmp/root0; then
     echo Failed to mount root loopback device
     exit 1
 fi
-if ! mount /dev/mapper/${LOOP_NAME}p3 /tmp/root1; then
+if ! mount /dev/mapper/${LOOP_NAME}p2 /tmp/root1; then
     echo Failed to mount backup loopback device
     exit 1
 fi
 
-mkdir -p /tmp/root0/boot
 mkdir -p /tmp/root0/data
 
-if ! mount /dev/mapper/${LOOP_NAME}p1 /tmp/root0/boot; then
-    echo Failed to mount boot loopback device
-    exit 1
-fi
-if ! mount /dev/mapper/${LOOP_NAME}p4 /tmp/root0/data; then
+if ! mount /dev/mapper/${LOOP_NAME}p3 /tmp/root0/data; then
     echo Failed to mount data loopback device
     exit 1
 fi
 
 # Extract files onto filesystems
 cd /tmp/root0 && tar xzf /var/lib/homeland/out/rootfs.tar.gz
-cd /tmp/root1 && tar --exclude="data/*" --exclude="boot/*" -xzf /var/lib/homeland/out/rootfs.tar.gz
+# Leave the B partition blank (smaller file size)
+# cd /tmp/root1 && tar --exclude="data/*" -xzf /var/lib/homeland/out/rootfs.tar.gz
 cd /
 
 mkdir -p /tmp/root0/data/overlay_/var/lib/docker
@@ -85,21 +80,21 @@ sync
 
 # Add bootloader
 grub-install --target=i386-pc --boot-directory=/tmp/root0/boot --no-floppy ${LOOP}
-cat > /tmp/root0/boot/grub/grub.cfg <<"EOF"
+cat > /tmp/root0/boot/grub/grub.cfg <<EOF
 set timeout=3
 set default=0
 
-menuentry "Homeland social" {
+menuentry "Homeland social [${VERSION}]" {
     set root=(hd0,1)
-    linux /vmlinuz-${BOARD_NAME} root=/dev/sda2 rootfstype=ext4
-    initrd /initramfs-${BOARD_NAME}
+    linux /boot/vmlinuz-${BOARD_NAME} root=/dev/sda1 ro rootfstype=ext4
+    initrd /boot/initramfs-${BOARD_NAME}
 }
 EOF
 
 [ ! -z "${HOOK_RUN_BEFORE_UMOUNT}" ] && ${HOOK_RUN_BEFORE_UMOUNT}
 
 # Umount and clean up.
-for mount in /tmp/root0/boot /tmp/root0/data /tmp/root0 /tmp/root1; do
+for mount in /tmp/root0/data /tmp/root0 /tmp/root1; do
     while ! umount ${mount}; do
         sleep 3.0
     done

@@ -3,7 +3,7 @@ CONFIG?=config.amd64
 VM_NAME?=homeland-test
 OWNER?=$(shell id -u)
 
-VERSION?=$(shell git tag)
+VERSION?=$(shell git tag | tail -n 1)
 BUILDER_NAME=homeland-os-builder
 
 include src/${CONFIG}
@@ -21,7 +21,7 @@ builder: clean-image
 		-t ${BUILDER_NAME} .
 
 out/rootfs-${VERSION}.tar.gz:
-	sudo docker run --runtime=sysbox-runc -ti \
+	sudo docker run --runtime=sysbox-runc \
 		-e ARCH=${ARCH} \
 		-e CONFIG=${CONFIG} \
 		-e VERSION=${VERSION} \
@@ -35,7 +35,7 @@ out/rootfs-${VERSION}.tar.gz:
 rootfs: out/rootfs-${VERSION}.tar.gz
 
 out/disk-${VERSION}.img: out/rootfs-${VERSION}.tar.gz
-	sudo docker run --privileged --cap-add=CAP_MKNOD -ti \
+	sudo docker run --privileged --cap-add=CAP_MKNOD \
 		-e ARCH=${ARCH} \
 		-e CONFIG=${CONFIG} \
 		-e VERSION=${VERSION} \

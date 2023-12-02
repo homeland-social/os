@@ -49,6 +49,8 @@ out/disk-${VERSION}.img: out/rootfs-${VERSION}.tar.gz
 disk.img: out/disk-${VERSION}.img
 
 disk.img.gz: disk.img
+	sha256sum out/disk-${VERSION}.img > out/disk-${VERSION}.img.sha256sum
+	sha256sum out/part-${VERSION}.img > out/part-${VERSION}.img.sha256sum
 	cat out/disk-${VERSION}.img | gzip -9 > out/disk-${VERSION}.img.gz
 	cat out/part-${VERSION}.img | gzip -9 > out/part-${VERSION}.img.gz
 

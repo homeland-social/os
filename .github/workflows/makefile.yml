@@ -2,9 +2,8 @@ name: Makefile CI
 
 on:
   push:
-    branches: [ "master" ]
     tags:
-      - v*
+      - 'v*'
 
 jobs:
   build:
@@ -24,7 +23,7 @@ jobs:
       run: make builder
 
     - name: Build
-      run: make disk.img
+      run: VERSION=${{ github.ref }} make disk.img
 
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2

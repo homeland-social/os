@@ -1,4 +1,4 @@
-ARCH=${ARCH}
+ARCH=amd64
 ALPINE_VERSION=3.18
 ALPINE_MIRROR=http://dl-cdn.alpinelinux.org/alpine/
 

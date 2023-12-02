@@ -1,5 +1,7 @@
 #!/bin/bash -x
 
+OUTPUT=$1
+
 source ${SRC}/${CONFIG}
 
 PACKAGES_INSTALL="${PACKAGES_INSTALL} docker-engine alpine-base grub linux-${BOARD_NAME} cloud-utils-growpart e2fsprogs e2fsprogs-extra"
@@ -115,5 +117,6 @@ umount ${ROOT}/proc
 umount ${ROOT}/tmp
 
 cd ${ROOT}
-tar -C ${ROOT} -czf ${OUT}/rootfs.tar.gz .
-ls -lah ${OUT}/rootfs.tar.gz
+tar -C ${ROOT} -czf ${OUT}/${OUTPUT} .
+chown ${OWNER}:${OWNER} ${OUT}/*
+ls -lah ${OUT}/${OUTPUT}

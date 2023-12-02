@@ -9,7 +9,7 @@ ARG ALPINE_MIRROR
 
 ENV BUILD_ARCH=${ARCH}
 ENV ALPINE_VERSION=${ALPINE_VERSION}
-ENV ALPINE_MIRROR=http://dl-cdn.alpinelinux.org/alpine/
+ENV ALPINE_MIRROR=${ALPINE_MIRROR}
 
 RUN apk update
 RUN apk upgrade

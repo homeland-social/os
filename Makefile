@@ -1,47 +1,62 @@
-SHELL = /bin/bash
-CONFIG ?= config.amd64
-VM_NAME ?= Test
+SHELL:=/bin/bash
+CONFIG?=config.amd64
+VM_NAME?=homeland-test
+OWNER?=$(shell id -u)
 
-VERSION = 1.0.1
-BUILDER_NAME = homeland-os-builder
+VERSION?=$(shell git tag)
+BUILDER_NAME=homeland-os-builder
+
+include src/${CONFIG}
 
 .PHONY: build builder out/disk.img
 
-clean-image:
-	docker image rm --force ${BUILDER_NAME}
+all: disk.img.gz
 
 builder: clean-image
-	source src/${CONFIG} && \
 	docker build --build-arg ARCH=${ARCH} \
+		--build-arg ARCH=${ARCH} \
 		--build-arg DOCKER_ARCH=${ARCH}/ \
 		--build-arg ALPINE_VERSION=${ALPINE_VERSION} \
+		--build-arg ALPINE_MIRROR=${ALPINE_MIRROR} \
 		-t ${BUILDER_NAME} .
 
-out/rootfs.tar.gz:
+out/rootfs-${VERSION}.tar.gz:
 	sudo docker run --runtime=sysbox-runc -ti \
+		-e ARCH=${ARCH} \
 		-e CONFIG=${CONFIG} \
 		-e VERSION=${VERSION} \
+		-e OWNER=${OWNER} \
 		-e SRC=/var/lib/homeland/src \
 		-e OUT=/var/lib/homeland/out \
 		-v ${PWD}/out:/var/lib/homeland/out \
 		-v ${PWD}/src:/var/lib/homeland/src:ro \
-		-v ${PWD}/entrypoint.sh:/entrypoint.sh:ro ${BUILDER_NAME} /var/lib/homeland/src/mkrootfs.sh out/rootfs-${VERSIONS}.tar.gz
+		-v ${PWD}/entrypoint.sh:/entrypoint.sh:ro ${BUILDER_NAME} /var/lib/homeland/src/mkrootfs.sh rootfs-${VERSION}.tar.gz
 
-out/disk.img:
+rootfs: out/rootfs-${VERSION}.tar.gz
+
+out/disk-${VERSION}.img: out/rootfs-${VERSION}.tar.gz
 	sudo docker run --privileged --cap-add=CAP_MKNOD -ti \
+		-e ARCH=${ARCH} \
 		-e CONFIG=${CONFIG} \
 		-e VERSION=${VERSION} \
+		-e OWNER=${OWNER} \
 		-e SRC=/var/lib/homeland/src \
 		-e OUT=/var/lib/homeland/out \
 		-v ${PWD}/out:/var/lib/homeland/out \
 		-v ${PWD}/src:/var/lib/homeland/src:ro \
-		-v ${PWD}/entrypoint.sh:/entrypoint.sh:ro ${BUILDER_NAME} /var/lib/homeland/src/mkimage.sh out/rootfs-${VERSION}.tar.gz out/disk-${VERSION}.img
+		-v ${PWD}/entrypoint.sh:/entrypoint.sh:ro ${BUILDER_NAME} /var/lib/homeland/src/mkimage.sh rootfs-${VERSION}.tar.gz disk-${VERSION}.img
 
-out/disk.vdi:
-	qemu-img convert -f raw -O vdi out/disk.img out/disk.vdi
+disk.img: out/disk-${VERSION}.img
 
-out/disk.qcow2:
-	qemu-img convert -f raw -O qcow2 out/disk.img out/disk.qcow2
+disk.img.gz: disk.img
+	cat out/disk-${VERSION}.img | gzip -9 > out/disk-${VERSION}.img.gz
+	cat out/part-${VERSION}.img | gzip -9 > out/part-${VERSION}.img.gz
+
+out/disk-${VERSION}.vdi:
+	qemu-img convert -f raw -O vdi out/disk-${VERSION}.img out/disk-${VERSION}.vdi
+
+out/disk-${VERSION}.qcow2:
+	qemu-img convert -f raw -O qcow2 out/disk-${VERSION}.img out/disk-${VERSION}.qcow2
 
 # https://www.virtualbox.org/manual/ch08.html
 detachVmDisk:
@@ -49,9 +64,12 @@ detachVmDisk:
 	VBoxManage storageattach ${VM_NAME} --storagectl "SATA" --port 0 --medium none
 	VBoxManage closemedium ${PWD}/out/disk.vdi --delete
 
-attachVmDisk: out/disk.vdi
+attachVmDisk: out/disk-${VERSION}.vdi
 	VBoxManage storageattach ${VM_NAME} --storagectl "SATA" --port 0 --type hdd --medium ${PWD}/out/disk.vdi
 	VBoxManage startvm ${VM_NAME}
 
 clean:
 	rm -rf out/*
+
+clean-image:
+	docker image rm --force ${BUILDER_NAME}

@@ -1,9 +1,12 @@
 #!/bin/bash -x
 
+INPUT=$1
+OUTPUT=$2
+
 source ${SRC}/${CONFIG}
 
 # Create (2G) disk image
-IMAGE=${OUT}/disk.img
+IMAGE=${OUT}/${OUTPUT}
 dd if=/dev/zero of=${IMAGE} bs=3084 count=1048576
 
 # Find and create loopback device
@@ -67,9 +70,9 @@ if ! mount /dev/mapper/${LOOP_NAME}p3 /tmp/root0/data; then
 fi
 
 # Extract files onto filesystems
-cd /tmp/root0 && tar xzf /var/lib/homeland/out/rootfs.tar.gz
+cd /tmp/root0 && tar xzf /var/lib/homeland/out/${INPUT}
 # Leave the B partition blank (smaller file size)
-# cd /tmp/root1 && tar --exclude="data/*" -xzf /var/lib/homeland/out/rootfs.tar.gz
+# cd /tmp/root1 && tar --exclude="data/*" -xzf /var/lib/homeland/out/${INPUT}
 cd /
 
 mkdir -p /tmp/root0/data/overlay_/var/lib/docker
@@ -100,4 +103,7 @@ for mount in /tmp/root0/data /tmp/root0 /tmp/root1; do
     done
 done
 
+dd if=/dev/mapper/${LOOP_NAME}p1 of=${OUT}/part-${VERSION}.img bs=4096
+
 kpartx -d -v ${LOOP}
+chown ${OWNER}:${OWNER} ${OUT}/*

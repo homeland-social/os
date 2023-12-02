@@ -5,4 +5,4 @@ if [ "${BUILD_ARCH}" != "${ARCH}" ]; then
     exit 1
 fi
 
-/bin/bash -c $@
+/bin/bash $@

@@ -14,7 +14,9 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Install dependencies
-      run: sudo apt install -y sysbox-ce
+      run: |
+        sudo apt update
+        sudo apt install -y sysbox-ce
 
     - name: Build
       run: make disk.img

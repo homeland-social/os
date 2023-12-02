@@ -23,7 +23,7 @@ jobs:
       run: make builder
 
     - name: Build
-      run: VERSION=${GITHUB_REF#refs/*/} make disk.img
+      run: VERSION=${GITHUB_REF#refs/*/} make disk.img.gz
 
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2

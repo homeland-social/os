@@ -1,0 +1,18 @@
+ARCH=${ARCH}
+ALPINE_VERSION=3.18
+ALPINE_MIRROR=http://dl-cdn.alpinelinux.org/alpine/
+
+BOARD_NAME=virt
+NET_WIFI=yes
+PACKAGES_INSTALL="docker-cli docker-bash-completion"
+SERVICES_ENABLE=
+MODULES_LOAD=e1000
+DOCKER_PULL=busybox:latest
+
+# mkrootfs.sh hooks:
+HOOK_RUN_AFTER_APK=
+HOOK_RUN_AFTER_FILES=
+
+# mkimage.sh hooks:
+HOOK_RUN_AFTER_LOSETUP=
+HOOK_RUN_BEFORE_UMOUNT=

@@ -277,4 +277,4 @@ CONF_VERSION = "2"
 
 IMAGE_INSTALL:append = " docker"
 DISTRO_FEATURES:append = " virtualization seccomp"
-
+IMAGES_FSTYPES:append = " wic.vmdk"

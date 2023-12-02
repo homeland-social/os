@@ -1,36 +1,57 @@
-SHELL := /bin/bash
+SHELL = /bin/bash
+CONFIG ?= config.amd64
+VM_NAME ?= Test
 
-.PHONY: setup-none setup-rpi setup-qemu build build-rpi build-qemu
+VERSION = 1.0.1
+BUILDER_NAME = homeland-os-builder
 
-init:
-	git submodule foreach "git submodule init"
+.PHONY: build builder out/disk.img
 
-setup-none:
-	rm -f build/tmp build/conf/local.conf build/conf/bblayers.conf
+clean-image:
+	docker image rm --force ${BUILDER_NAME}
 
-setup-rpi: setup-none
-	mkdir -p build/tmp.rpi
-	cd build && \
-		ln -sf tmp.rpi tmp
-	cd build/conf && \
-		ln -sf bblayers.conf.rpi bblayers.conf && \
-		ln -sf local.conf.rpi local.conf
+builder: clean-image
+	source src/${CONFIG} && \
+	docker build --build-arg ARCH=${ARCH} \
+		--build-arg DOCKER_ARCH=${ARCH}/ \
+		--build-arg ALPINE_VERSION=${ALPINE_VERSION} \
+		-t ${BUILDER_NAME} .
 
-setup-qemu: setup-none
-	mkdir -p build/tmp.qemux86-64
-	cd build && \
-		ln -sf tmp.qemux86-64 tmp
-	cd build/conf && \
-		ln -sf bblayers.conf.qemux86-64 bblayers.conf && \
-		ln -sf local.conf.qemux86-64 local.conf
+out/rootfs.tar.gz:
+	sudo docker run --runtime=sysbox-runc -ti \
+		-e CONFIG=${CONFIG} \
+		-e VERSION=${VERSION} \
+		-e SRC=/var/lib/homeland/src \
+		-e OUT=/var/lib/homeland/out \
+		-v ${PWD}/out:/var/lib/homeland/out \
+		-v ${PWD}/src:/var/lib/homeland/src:ro \
+		-v ${PWD}/entrypoint.sh:/entrypoint.sh:ro ${BUILDER_NAME} /var/lib/homeland/src/mkrootfs.sh out/rootfs-${VERSIONS}.tar.gz
 
-build:
-	source poky/oe-init-build-env build && \
-		bitbake core-image-minimal
+out/disk.img:
+	sudo docker run --privileged --cap-add=CAP_MKNOD -ti \
+		-e CONFIG=${CONFIG} \
+		-e VERSION=${VERSION} \
+		-e SRC=/var/lib/homeland/src \
+		-e OUT=/var/lib/homeland/out \
+		-v ${PWD}/out:/var/lib/homeland/out \
+		-v ${PWD}/src:/var/lib/homeland/src:ro \
+		-v ${PWD}/entrypoint.sh:/entrypoint.sh:ro ${BUILDER_NAME} /var/lib/homeland/src/mkimage.sh out/rootfs-${VERSION}.tar.gz out/disk-${VERSION}.img
 
-build-rpi: setup-rpi build
+out/disk.vdi:
+	qemu-img convert -f raw -O vdi out/disk.img out/disk.vdi
 
-build-qemu: setup-qemu build
+out/disk.qcow2:
+	qemu-img convert -f raw -O qcow2 out/disk.img out/disk.qcow2
 
-clean: setup-none
-	rm -rf build/tmp.rpi/* build/tmp.qemux86-64
+# https://www.virtualbox.org/manual/ch08.html
+detachVmDisk:
+	-VBoxManage controlvm ${VM_NAME} poweroff
+	VBoxManage storageattach ${VM_NAME} --storagectl "SATA" --port 0 --medium none
+	VBoxManage closemedium ${PWD}/out/disk.vdi --delete
+
+attachVmDisk: out/disk.vdi
+	VBoxManage storageattach ${VM_NAME} --storagectl "SATA" --port 0 --type hdd --medium ${PWD}/out/disk.vdi
+	VBoxManage startvm ${VM_NAME}
+
+clean:
+	rm -rf out/*

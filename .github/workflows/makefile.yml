@@ -20,6 +20,9 @@ jobs:
         wget https://downloads.nestybox.com/sysbox/releases/v0.6.2/sysbox-ce_0.6.2-0.linux_amd64.deb
         sudo apt install -y ./sysbox-ce_0.6.2-0.linux_amd64.deb
 
+    - name: Build builder
+      run: make builder
+
     - name: Build
       run: make disk.img
 

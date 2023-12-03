@@ -12,6 +12,9 @@ include src/${CONFIG}
 
 all: disk.img.gz
 
+out:
+	mkdir out
+
 builder: clean-image
 	docker build --build-arg ARCH=${ARCH} \
 		--build-arg ARCH=${ARCH} \
@@ -20,17 +23,17 @@ builder: clean-image
 		--build-arg ALPINE_MIRROR=${ALPINE_MIRROR} \
 		-t ${BUILDER_NAME} .
 
-out/rootfs-${VERSION}.tar.gz:
+out/rootfs-${VERSION}.tar.gz: out
 	sudo docker run --runtime=sysbox-runc \
 		-e ARCH=${ARCH} \
 		-e CONFIG=${CONFIG} \
 		-e VERSION=${VERSION} \
-		-e OWNER=${OWNER} \
 		-e SRC=/var/lib/homeland/src \
 		-e OUT=/var/lib/homeland/out \
 		-v ${PWD}/out:/var/lib/homeland/out \
 		-v ${PWD}/src:/var/lib/homeland/src:ro \
 		-v ${PWD}/entrypoint.sh:/entrypoint.sh:ro ${BUILDER_NAME} /var/lib/homeland/src/mkrootfs.sh rootfs-${VERSION}.tar.gz
+	sudo chown ${OWNER}:${OWNER} out/rootfs-${VERSION}.tar.gz
 
 rootfs: out/rootfs-${VERSION}.tar.gz
 
@@ -39,12 +42,12 @@ out/disk-${VERSION}.img: out/rootfs-${VERSION}.tar.gz
 		-e ARCH=${ARCH} \
 		-e CONFIG=${CONFIG} \
 		-e VERSION=${VERSION} \
-		-e OWNER=${OWNER} \
 		-e SRC=/var/lib/homeland/src \
 		-e OUT=/var/lib/homeland/out \
 		-v ${PWD}/out:/var/lib/homeland/out \
 		-v ${PWD}/src:/var/lib/homeland/src:ro \
 		-v ${PWD}/entrypoint.sh:/entrypoint.sh:ro ${BUILDER_NAME} /var/lib/homeland/src/mkimage.sh rootfs-${VERSION}.tar.gz disk-${VERSION}.img
+	sudo chown ${OWNER}:${OWNER} out/disk-${VERSION}.img
 
 disk.img: out/disk-${VERSION}.img
 

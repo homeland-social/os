@@ -118,5 +118,4 @@ umount ${ROOT}/tmp
 
 cd ${ROOT}
 tar -C ${ROOT} -czf ${OUT}/${OUTPUT} .
-chown ${OWNER}:${OWNER} ${OUT}/*
 ls -lah ${OUT}/${OUTPUT}

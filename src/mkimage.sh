@@ -106,4 +106,3 @@ done
 dd if=/dev/mapper/${LOOP_NAME}p1 of=${OUT}/part-${VERSION}.img bs=4096
 
 kpartx -d -v ${LOOP}
-chown ${OWNER}:${OWNER} ${OUT}/*

@@ -4,6 +4,7 @@ OUTPUT=$1
 
 source ${SRC}/${CONFIG}
 
+MODULES_LOAD="${MODULES_LOAD} ${NET_ETH}"
 PACKAGES_INSTALL="${PACKAGES_INSTALL} docker-engine alpine-base grub linux-${BOARD_NAME} cloud-utils-growpart e2fsprogs e2fsprogs-extra"
 SERVICES_ENABLE="${SERVICES_ENABLE} networking modules docker expand-data sysctl"
 
@@ -51,21 +52,25 @@ echo 'RESOLV_CONF="NO"' > ${ROOT}/etc/udhcpc/udhcpc.conf
 [ -f ${SRC}/${ARCH}/fstab.append ] && cat ${SRC}/${ARCH}/fstab.append >> ${ROOT}/etc/fstab
 
 # Append modules for auto-loading
-for mod in ${MODULES_APPEND}; do
+for mod in ${MODULES_LOAD}; do
     echo ${mod} >> ${ROOT}/etc/modules
 done
 
-# Set up networking (and symlink allowing /etc/network/interfaces to be writable)
-mkdir -p ${ROOT}/data/link_/etc/network
-echo homeland > ${ROOT}/etc/hostname
-cat > ${ROOT}/data/link_/etc/network/interfaces <<EOF
+if [ ! -z "${NET_ETH}" ]; then
+    # Set up networking (and symlink allowing /etc/network/interfaces to be writable)
+    mkdir -p ${ROOT}/data/link_/etc/network
+    echo homeland > ${ROOT}/etc/hostname
+    cat > ${ROOT}/data/link_/etc/network/interfaces <<EOF
 auto lo
 auto eth0
 iface lo inet loopback
 iface eth0 inet dhcp
 EOF
-cd ${ROOT}/etc/network && ln -sf /data/link_/etc/network/interfaces interfaces
-echo ${VERSION} > ${ROOT}/etc/release
+    cd ${ROOT}/etc/network && ln -sf /data/link_/etc/network/interfaces interfaces
+fi
+
+echo VERSION=\"${VERSION}\" > ${ROOT}/etc/release
+echo ARCH=\"${ARCH}\" >> ${ROOT}/etc/release
 echo kernel.printk = 2 4 1 7 > ${ROOT}/etc/sysctl.d/local.conf
 
 # NOTE: this is fixed in alpine 3.19:
@@ -76,11 +81,12 @@ chroot ${ROOT} mkdir -p /data//var/lib/docker
 [ ! -z "${HOOK_RUN_AFTER_FILES}" ] && ${HOOK_RUN_AFTER_FILES}
 
 if [ ! -z "${DOCKER_PULL}" ]; then
+    SOCK="/tmp/docker.sock"
     SERVICES_ENABLE="${SERVICES_ENABLE} containers"
 
     # Run dockerd inside the chroot.
     chroot ${ROOT} /usr/bin/dockerd --storage-driver=vfs \
-        -H unix:///tmp/docker.sock --pidfile=/tmp/docker.pid \
+        -H unix://${SOCK} --pidfile=/tmp/docker.pid \
         --data-root=/data/var/lib/docker > /dev/null 2>&1 &
 
     # Wait for dockerd to start...
@@ -92,7 +98,7 @@ if [ ! -z "${DOCKER_PULL}" ]; then
     # Pull images and build default manifest...
     echo > /tmp/containers.manifest
     for image_tag in ${DOCKER_PULL}; do
-        docker -H unix://${ROOT}/tmp/docker.sock pull ${image_tag}
+        docker -H unix://${ROOT}${SOCK} pull ${image_tag}
         echo ${image_tag} >> /tmp/containers.manifest
     done
 
@@ -104,17 +110,13 @@ if [ ! -z "${DOCKER_PULL}" ]; then
         cp /tmp/containers.manifest ${ROOT}/etc/containers.manifest
     fi
 
-    docker -H unix://${ROOT}/tmp/docker.sock image ls
+    docker -H unix://${ROOT}${SOCK} image ls
 
     # Kill dockerd and wait for it to exit.
     kill ${PID} > /dev/null 2>&1
     while kill -0 ${PID} > /dev/null 2>&1; do
         sleep 0.1
     done
-
-    # We use overlay2, so rename some directories.
-    mv ${ROOT}/data/var/lib/docker/vfs ${ROOT}/data/var/lib/docker/overlay2
-    mv ${ROOT}/data/var/lib/docker/image/vfs ${ROOT}/data/var/lib/docker/image/overlay2
 
     # Remove some unnecessary directories
     rm -rf ${ROOT}/var/lib/docker/runtimes ${ROOT}/var/lib/docker/tmp ${ROOT}/run/*

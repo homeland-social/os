@@ -6,7 +6,7 @@ BOARD_NAME=virt
 NET_WIFI=yes
 PACKAGES_INSTALL="docker-cli docker-bash-completion"
 SERVICES_ENABLE=
-MODULES_LOAD=e1000
+MODULES_APPEND=e1000
 DOCKER_PULL=busybox:latest
 
 # mkrootfs.sh hooks:
@@ -16,3 +16,4 @@ HOOK_RUN_AFTER_FILES=
 # mkimage.sh hooks:
 HOOK_RUN_AFTER_LOSETUP=
 HOOK_RUN_BEFORE_UMOUNT=
+HOOK_RUN_BEFORE_TAR=

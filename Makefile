@@ -64,14 +64,20 @@ out/disk-${VERSION}.qcow2:
 	qemu-img convert -f raw -O qcow2 out/disk-${VERSION}.img out/disk-${VERSION}.qcow2
 
 # https://www.virtualbox.org/manual/ch08.html
-detachVmDisk:
-	-VBoxManage controlvm ${VM_NAME} poweroff
-	VBoxManage storageattach ${VM_NAME} --storagectl "SATA" --port 0 --medium none
-	VBoxManage closemedium ${PWD}/out/disk.vdi --delete
+vbox-create:
+	VBoxManage createvm ${VM_NAME}
 
-attachVmDisk: out/disk-${VERSION}.vdi
-	VBoxManage storageattach ${VM_NAME} --storagectl "SATA" --port 0 --type hdd --medium ${PWD}/out/disk.vdi
+vbox-down:
+	-VBoxManage controlvm ${VM_NAME} poweroff
+	-VBoxManage storageattach ${VM_NAME} --storagectl "SATA" --port 0 --medium none
+	VBoxManage closemedium ${PWD}/out/disk-${VERSION}.vdi --delete
+
+vbox-up: out/disk-${VERSION}.vdi
+	VBoxManage storageattach ${VM_NAME} --storagectl "SATA" --port 0 --type hdd --medium ${PWD}/out/disk-${VERSION}.vdi
 	VBoxManage startvm ${VM_NAME}
+
+vbox-remove:
+	VBoxManage unregistervm ${VM_NAME}
 
 clean:
 	rm -rf out/*

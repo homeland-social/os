@@ -5,7 +5,6 @@ OUTPUT=$2
 
 source ${SRC}/${CONFIG}
 
-# Create (2G) disk image
 IMAGE=${OUT}/${OUTPUT}
 dd if=/dev/zero of=${IMAGE} bs=3084 count=1048576
 
@@ -69,15 +68,11 @@ if ! mount /dev/mapper/${LOOP_NAME}p3 /tmp/root0/data; then
     exit 1
 fi
 
+[ ! -z "${HOOK_RUN_BEFORE_TAR}" ] && ${HOOK_RUN_BEFORE_TAR}
+
 # Extract files onto filesystems
 cd /tmp/root0 && tar xzf /var/lib/homeland/out/${INPUT}
-# Leave the B partition blank (smaller file size)
-# cd /tmp/root1 && tar --exclude="data/*" -xzf /var/lib/homeland/out/${INPUT}
 cd /
-
-mkdir -p /tmp/root0/data/overlay_/var/lib/docker
-mkdir -p /tmp/root0/data/work_/var/lib/docker
-mkdir -p /tmp/root0/data/links_/etc/network
 
 sync
 

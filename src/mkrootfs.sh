@@ -5,7 +5,7 @@ OUTPUT=$1
 source ${SRC}/${CONFIG}
 
 PACKAGES_INSTALL="${PACKAGES_INSTALL} docker-engine alpine-base grub linux-${BOARD_NAME} cloud-utils-growpart e2fsprogs e2fsprogs-extra"
-SERVICES_ENABLE="${SERVICES_ENABLE} networking modules docker containers expand-data"
+SERVICES_ENABLE="${SERVICES_ENABLE} networking modules docker expand-data sysctl"
 
 if [ "NET_WIFI" == "yes" ]; then
     PACKAGES_INSTALL="${PACKAGES_INSTALL} iwd"
@@ -18,9 +18,7 @@ mkdir -p ${ROOT}
 apk add -U \
     -X ${ALPINE_MIRROR}v${ALPINE_VERSION}/main \
     -X ${ALPINE_MIRROR}v${ALPINE_VERSION}/community \
-    -X ${ALPINE_MIRROR}v${ALPINE_VERSION}/edge \
     --no-cache --allow-untrusted --initdb -p ${ROOT} ${PACKAGES_INSTALL}
-apk del --no-cache -p ${ROOT} --force-broken-world apk-tools
 
 [ ! -z "${HOOK_RUN_AFTER_APK}" ] && ${HOOK_RUN_AFTER_APK}
 
@@ -46,6 +44,8 @@ if [ -f ${SRC}/${ARCH}/resolv.conf ]; then
 else
     echo -e "nameserver 8.8.8.8\nnameserver 8.8.4.4\n" > ${ROOT}/etc/resolv.conf
 fi
+mkdir -p ${ROOT}/etc/udhcpc
+echo 'RESOLV_CONF="NO"' > ${ROOT}/etc/udhcpc/udhcpc.conf
 
 # Append to /etc files
 [ -f ${SRC}/${ARCH}/fstab.append ] && cat ${SRC}/${ARCH}/fstab.append >> ${ROOT}/etc/fstab
@@ -56,27 +56,32 @@ for mod in ${MODULES_APPEND}; do
 done
 
 # Set up networking (and symlink allowing /etc/network/interfaces to be writable)
-mkdir -p ${ROOT}/data/links_/etc/network
-cat > ${ROOT}/data/links_/etc/network/interfaces <<EOF
+mkdir -p ${ROOT}/data/link_/etc/network
+echo homeland > ${ROOT}/etc/hostname
+cat > ${ROOT}/data/link_/etc/network/interfaces <<EOF
+auto lo
+auto eth0
+iface lo inet loopback
 iface eth0 inet dhcp
 EOF
-cd ${ROOT}/etc/network && ln -sf /data/links_/etc/network/interfaces interfaces
-
-# Enable services
-for service in ${SERVICES_ENABLE}; do
-    chroot ${ROOT} /sbin/rc-update add ${service}
-done
+cd ${ROOT}/etc/network && ln -sf /data/link_/etc/network/interfaces interfaces
+echo ${VERSION} > ${ROOT}/etc/release
+echo kernel.printk = 2 4 1 7 > ${ROOT}/etc/sysctl.d/local.conf
 
 # NOTE: this is fixed in alpine 3.19:
 # https://github.com/alpinelinux/aports/commit/3a8f76ba962aca7c4553f3dd138ba5b0edabcb2e
 chroot ${ROOT} /usr/sbin/addgroup -S docker 2> /dev/null
+chroot ${ROOT} mkdir -p /data//var/lib/docker
 
 [ ! -z "${HOOK_RUN_AFTER_FILES}" ] && ${HOOK_RUN_AFTER_FILES}
 
 if [ ! -z "${DOCKER_PULL}" ]; then
+    SERVICES_ENABLE="${SERVICES_ENABLE} containers"
+
     # Run dockerd inside the chroot.
-    chroot ${ROOT} /usr/bin/dockerd --storage-driver vfs \
-        -H unix:///tmp/docker.sock --pidfile=/tmp/docker.pid > /dev/null 2>&1 &
+    chroot ${ROOT} /usr/bin/dockerd --storage-driver=vfs \
+        -H unix:///tmp/docker.sock --pidfile=/tmp/docker.pid \
+        --data-root=/data/var/lib/docker > /dev/null 2>&1 &
 
     # Wait for dockerd to start...
     while [ ! -f ${ROOT}/tmp/docker.pid ]; do
@@ -107,9 +112,18 @@ if [ ! -z "${DOCKER_PULL}" ]; then
         sleep 0.1
     done
 
+    # We use overlay2, so rename some directories.
+    mv ${ROOT}/data/var/lib/docker/vfs ${ROOT}/data/var/lib/docker/overlay2
+    mv ${ROOT}/data/var/lib/docker/image/vfs ${ROOT}/data/var/lib/docker/image/overlay2
+
     # Remove some unnecessary directories
     rm -rf ${ROOT}/var/lib/docker/runtimes ${ROOT}/var/lib/docker/tmp ${ROOT}/run/*
 fi
+
+# Enable services
+for service in ${SERVICES_ENABLE}; do
+    chroot ${ROOT} /sbin/rc-update add ${service}
+done
 
 # Clean up mounts
 umount ${ROOT}/dev

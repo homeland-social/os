@@ -11,7 +11,7 @@ wait_for_docker() {
     local ret=0
 
     while ! docker info > /dev/null 2>&1; do
-        if [ ${num_loops} -gte 30 ]; then
+        if [ ${num_loops} -ge 30 ]; then
             ret=1
             break
         fi

@@ -1,8 +1,8 @@
-ARCH=amd64
+ARCH=arm64
 ALPINE_VERSION=3.18
 ALPINE_MIRROR=http://dl-cdn.alpinelinux.org/alpine/
 
-BOARD_NAME=virt
+BOARD_NAME=rpi4
 NET_WIFI=yes
 NET_ETH=e1000
 PACKAGES_INSTALL="docker-cli docker-bash-completion"
@@ -17,4 +17,4 @@ HOOK_RUN_AFTER_FILES=
 # mkimage.sh hooks:
 HOOK_RUN_AFTER_LOSETUP=
 HOOK_RUN_BEFORE_UMOUNT=
-HOOK_RUN_BEFORE_TAR=/bin/bash
+HOOK_RUN_BEFORE_TAR=

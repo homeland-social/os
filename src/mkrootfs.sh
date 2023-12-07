@@ -8,13 +8,15 @@ MODULES_LOAD="${MODULES_LOAD} ${NET_ETH}"
 PACKAGES_INSTALL="${PACKAGES_INSTALL} docker-engine alpine-base grub linux-${BOARD_NAME} cloud-utils-growpart e2fsprogs e2fsprogs-extra"
 SERVICES_ENABLE="${SERVICES_ENABLE} networking modules docker expand-data sysctl"
 
-if [ "NET_WIFI" == "yes" ]; then
+if [ "${NET_WIFI}" == "yes" ]; then
     PACKAGES_INSTALL="${PACKAGES_INSTALL} iwd"
     SERVICES_ENABLE="${SERVICES_ENABLE} iwd"
 fi
 
 ROOT=/tmp/root
 mkdir -p ${ROOT}
+mkdir -p ${ROOT}/etc/apk
+cp -vR /etc/apk ${ROOT}/etc/
 
 apk add -U \
     -X ${ALPINE_MIRROR}v${ALPINE_VERSION}/main \
@@ -87,7 +89,7 @@ if [ ! -z "${DOCKER_PULL}" ]; then
     # Run dockerd inside the chroot.
     chroot ${ROOT} /usr/bin/dockerd --storage-driver=vfs \
         -H unix://${SOCK} --pidfile=/tmp/docker.pid \
-        --data-root=/data/var/lib/docker > /dev/null 2>&1 &
+        --data-root=/data/var/lib/docker &
 
     # Wait for dockerd to start...
     while [ ! -f ${ROOT}/tmp/docker.pid ]; do

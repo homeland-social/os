@@ -15,7 +15,7 @@ RUN apk update
 RUN apk upgrade
 RUN apk add alpine-sdk xorriso sfdisk u-boot-tools mkinitfs docker-cli \
         bash tar coreutils e2fsprogs e2fsprogs-extra dosfstools partx \
-        multipath-tools grub grub-bios
+        multipath-tools grub
 
 ADD entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

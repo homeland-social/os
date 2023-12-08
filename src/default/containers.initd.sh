@@ -16,7 +16,7 @@ wait_for_docker() {
             ret=1
             break
         fi
-        num_loops=$(expr ${num_loops} + 1)
+        num_loops=$((num_loops + 1))
         sleep 1.0
     done
 
@@ -38,6 +38,7 @@ start() {
     eindent
     local i=0
     local has_errors=0
+    # shellcheck disable=SC2002
     cat /etc/containers.manifest | \
     grep -vE '#|^$' | \
     while read -r image cmd; do
@@ -49,14 +50,14 @@ start() {
             docker run --restart=always -d --name ${name} ${image} ${cmd} > /dev/null 2>&1
             ret=$?
         else
-            docker start ${id} > /dev/null 2>&1
+            docker start "${id}" > /dev/null 2>&1
             ret=$?
         fi
         if [ ${ret} -ne 0 ]; then
             has_errors=1
         fi
         veend ${ret}
-        i=$((${i} + 1))
+        i=$((i + 1))
     done
     eoutdent
     eend ${has_errors}
@@ -70,6 +71,7 @@ stop() {
     local i=0
     local ret=0
     local has_errors=0
+    # shellcheck disable=SC2002
     cat /etc/containers.manifest | \
     grep -vE '#|^$' | \
     while read -r image cmd; do
@@ -78,14 +80,14 @@ stop() {
         ret=0
         id=$(docker ps -q -f name=${name})
         if [ ! -z "${id}" ]; then
-            docker stop ${id} > /dev/null 2>&1
+            docker stop "${id}" > /dev/null 2>&1
             ret=$?
             if [ ${ret} -ne 0 ]; then
                 has_errors=1
             fi
         fi
         veend ${ret}
-        i=$((${i} + 1))
+        i=$((i + 1))
     done
     eoutdent
     eend ${has_errors}

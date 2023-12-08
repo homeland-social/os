@@ -1,0 +1,11 @@
+# See default config below. Variables that can be modified are defined there.
+# To append to an option, do:
+# FOO="${FOO} your options here"
+
+source ../default/config
+
+ARCH=arm64
+BOARD_NAME=rpi4
+NET_WIFI=yes
+NET_ETH=e1000
+PACKAGES_INSTALL="docker-cli docker-bash-completion"

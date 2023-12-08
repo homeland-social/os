@@ -1,0 +1,37 @@
+# The values below are common to all other configs although they might be
+# overidden by any individual config in src/${ARCH}/config
+
+ARCH=amd64
+ALPINE_VERSION=3.18
+ALPINE_MIRROR=http://dl-cdn.alpinelinux.org/alpine/
+
+# Sizes in Megabytes, leave DATA_SIZE blank to grow
+DISK_SIZE=3072
+BOOT_SIZE=64
+ROOT_SIZE=384
+DATA_SIZE=
+
+BOARD_NAME=virt
+NET_WIFI=no
+NET_ETH=e1000
+PACKAGES_INSTALL="docker-cli docker-bash-completion"
+SERVICES_ENABLE=
+MODULES_LOAD=
+DOCKER_PULL=selfhostedpro/yacht:latest
+
+# Important files which are copied to the root fs.
+CONTAINERS_INITD_PATH=default/containers.initd
+CONTAINERS_MANIFEST_PATH=default/containers.manifest
+DOCKER_CONFD_PATH=default/docker.confd
+EXPAND_DATA_CONFD_PATH==default/expand-data.confd
+EXPAND_DATA_INITD_PATH==default/expand-data.initd
+FSTAB_APPEND_PATH=default/fstab.append
+
+# mkrootfs.sh hooks:
+HOOK_RUN_AFTER_APK=
+HOOK_RUN_AFTER_FILES=
+
+# mkimage.sh hooks:
+HOOK_RUN_AFTER_LOSETUP=
+HOOK_RUN_BEFORE_UMOUNT=
+HOOK_RUN_BEFORE_TAR=

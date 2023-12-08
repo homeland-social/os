@@ -1,0 +1,26 @@
+# See default config below. Variables that can be modified are defined there.
+# To append to an option, do:
+# FOO="${FOO} your options here"
+
+source ../default/config
+
+# Sizes in Megabytes, leave DATA_SIZE blank to grow
+DISK_SIZE=6144
+BOOT_SIZE=128
+ROOT_SIZE=2048
+DATA_SIZE=
+
+BOARD_NAME=lts
+NET_WIFI=yes
+NET_ETH=e1000
+PACKAGES_INSTALL="docker-cli docker-bash-completion usbutils go alpine-sdk"
+MODULES_LOAD=rt2800usb
+
+# Important files which are copied to the root fs.
+CONTAINERS_INITD_PATH=dev/containers.initd
+CONTAINERS_MANIFEST_PATH=dev/containers.manifest
+DOCKER_CONFD_PATH=dev/docker.confd
+EXPAND_DATA_CONFD_PATH=dev/expand-data.confd
+EXPAND_DATA_INITD_PATH=dev/expand-data.initd
+FSTAB_APPEND_PATH=dev/fstab.append
+

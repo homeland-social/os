@@ -3,7 +3,7 @@
 INPUT=$1
 OUTPUT=$2
 
-source ${SRC}/${CONFIG}
+source ${SRC}/${CONFIG}/config
 
 IMAGE=${OUT}/${OUTPUT}
 dd if=/dev/zero of=${IMAGE} bs=${DISK_SIZE} count=1048576

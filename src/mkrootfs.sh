@@ -2,7 +2,7 @@
 
 OUTPUT=$1
 
-source ${SRC}/${CONFIG}
+source ${SRC}/${CONFIG}/config
 
 MODULES_LOAD="${MODULES_LOAD} ${NET_ETH}"
 PACKAGES_INSTALL="${PACKAGES_INSTALL} docker-engine alpine-base grub linux-${BOARD_NAME} cloud-utils-growpart e2fsprogs e2fsprogs-extra"

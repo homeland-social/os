@@ -1,11 +1,11 @@
 SHELL:=/bin/bash
-CONFIG?=config.amd64
+CONFIG?=amd64
 VM_NAME?=homeland-test
 OWNER?=$(shell id -u)
 
 VERSION?=$(shell git tag | tail -n 1)
 
-include src/${CONFIG}
+include src/${CONFIG}/config
 
 .PHONY: build builder out/disk.img
 

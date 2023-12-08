@@ -1,4 +1,5 @@
 #!/sbin/openrc-run
+# shellcheck shell=bash
 
 depend() {
     before localmount

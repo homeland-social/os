@@ -1,37 +1,43 @@
+#!/bin/bash
+
 # The values below are common to all other configs although they might be
 # overidden by any individual config in src/${ARCH}/config
 
-ARCH=amd64
-ALPINE_VERSION=3.18
-ALPINE_MIRROR=http://dl-cdn.alpinelinux.org/alpine/
+export ARCH=amd64
+export ALPINE_VERSION=3.18
+export ALPINE_MIRROR=http://dl-cdn.alpinelinux.org/alpine/
 
 # Sizes in Megabytes, leave DATA_SIZE blank to grow
-DISK_SIZE=3072
-BOOT_SIZE=64
-ROOT_SIZE=384
-DATA_SIZE=
+export DISK_SIZE=3072
+export BOOT_SIZE=64
+export ROOT_SIZE=384
+export DATA_SIZE=
 
-BOARD_NAME=virt
-NET_WIFI=no
-NET_ETH=e1000
-PACKAGES_INSTALL="docker-cli docker-bash-completion"
-SERVICES_ENABLE=
-MODULES_LOAD=
-DOCKER_PULL=selfhostedpro/yacht:latest
+export BOARD_NAME=virt
+export NET_WIFI=no
+export NET_ETH=e1000
+export PACKAGES_INSTALL="docker-cli docker-bash-completion"
+export SERVICES_ENABLE=
+export MODULES_LOAD=
+export DOCKER_PULL=selfhostedpro/yacht:latest
 
 # Important files which are copied to the root fs.
-CONTAINERS_INITD_PATH=default/containers.initd
-CONTAINERS_MANIFEST_PATH=default/containers.manifest
-DOCKER_CONFD_PATH=default/docker.confd
-EXPAND_DATA_CONFD_PATH==default/expand-data.confd
-EXPAND_DATA_INITD_PATH==default/expand-data.initd
-FSTAB_APPEND_PATH=default/fstab.append
+export CONTAINERS_INITD_PATH=default/containers.initd.sh
+export CONTAINERS_MANIFEST_PATH=default/containers.manifest
+export DOCKER_CONFD_PATH=default/docker.confd
+export EXPAND_DATA_CONFD_PATH=default/expand-data.confd
+export EXPAND_DATA_INITD_PATH=default/expand-data.initd.sh
+export FSTAB_APPEND_PATH=default/fstab.append
+
+# You can run any command at various stages of the build for debugging
+# purposes. i.e. setting any of the following to /bin/bash will open a
+# manhole.
 
 # mkrootfs.sh hooks:
-HOOK_RUN_AFTER_APK=
-HOOK_RUN_AFTER_FILES=
+export HOOK_RUN_AFTER_APK=
+export HOOK_RUN_AFTER_FILES=
 
 # mkimage.sh hooks:
-HOOK_RUN_AFTER_LOSETUP=
-HOOK_RUN_BEFORE_UMOUNT=
-HOOK_RUN_BEFORE_TAR=
+export HOOK_RUN_AFTER_LOSETUP=
+export HOOK_RUN_BEFORE_UMOUNT=
+export HOOK_RUN_BEFORE_TAR=

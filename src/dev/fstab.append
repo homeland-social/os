@@ -1,7 +1,0 @@
-# Added at build time using src/${ARCH}/fstab.append
-# /sbin/init just looks at the options for / so we have a dummy entry.
-# the root device changes, so providing a device here does not make sense.
-
-dummy       				/               ext4        defaults,ro 0 0
-tmpfs						/var/log		tmpfs		defaults 0 0
-/dev/sda3					/data			ext4		defaults 0 0

@@ -1,4 +1,5 @@
 #!/sbin/openrc-run
+# shellcheck shell=bash
 
 depend() {
     need docker
@@ -27,20 +28,25 @@ wait_for_docker() {
 start() {
     ebegin "Starting docker containers"
     wait_for_docker
-    local ret=$?
 
+    local ret=$?
     if [ ${ret} -ne 0 ]; then
         eend ${ret}
         return ${ret}
     fi
 
+    eindent
+    local i=0
     local has_errors=0
-    while read -r name cmd; do
+    cat /etc/containers.manifest | \
+    grep -vE '#|^$' | \
+    while read -r image cmd; do
+        local name="auto${i}"
         vebegin "Starting ${name}"
         ret=0
         id=$(docker ps -a -q -f name=${name})
         if [ -z "${id}" ]; then
-            docker run --restart=always -d --name ${name} ${cmd} > /dev/null 2>&1
+            docker run --restart=always -d --name ${name} ${image} ${cmd} > /dev/null 2>&1
             ret=$?
         else
             docker start ${id} > /dev/null 2>&1
@@ -50,17 +56,24 @@ start() {
             has_errors=1
         fi
         veend ${ret}
-    done < /etc/containers.manifest 
+        i=$((${i} + 1))
+    done
     eoutdent
     eend ${has_errors}
 }
 
 stop() {
-    wait_for_docker
-
     ebegin "Stopping docker containers"
+    wait_for_docker
     eindent
-    while read -r name cmd; do
+
+    local i=0
+    local ret=0
+    local has_errors=0
+    cat /etc/containers.manifest | \
+    grep -vE '#|^$' | \
+    while read -r image cmd; do
+        local name="auto${i}"
         vebegin "Stopping ${name}"
         ret=0
         id=$(docker ps -q -f name=${name})
@@ -72,7 +85,8 @@ stop() {
             fi
         fi
         veend ${ret}
-    done < /etc/containers.manifest 
+        i=$((${i} + 1))
+    done
     eoutdent
     eend ${has_errors}
 }

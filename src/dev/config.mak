@@ -1,10 +1,8 @@
-#!/bin/bash
-
 # See default config below. Variables that can be modified are defined there.
 # To append to an option, do:
 # FOO="${FOO} your options here"
 
-source ../default/config
+include ${BUILD_ROOT}/src/default/config.mak
 
 # Sizes in Megabytes, leave DATA_SIZE blank to grow
 export DISK_SIZE=6144

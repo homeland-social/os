@@ -2,8 +2,6 @@
 
 OUTPUT=$1
 
-source ${SRC}/${CONFIG}/config
-
 MODULES_LOAD="${MODULES_LOAD} ${NET_ETH}"
 PACKAGES_INSTALL="${PACKAGES_INSTALL} docker-engine alpine-base grub linux-${BOARD_NAME} cloud-utils-growpart e2fsprogs e2fsprogs-extra"
 SERVICES_ENABLE="${SERVICES_ENABLE} networking modules docker expand-data sysctl"
@@ -19,8 +17,8 @@ mkdir -p ${ROOT}/etc/apk
 cp -R /etc/apk ${ROOT}/etc/
 
 apk add -U \
-    -X ${ALPINE_MIRROR}v${ALPINE_VERSION}/main \
-    -X ${ALPINE_MIRROR}v${ALPINE_VERSION}/community \
+    -X "${ALPINE_MIRROR}v${ALPINE_VERSION}/main" \
+    -X "${ALPINE_MIRROR}v${ALPINE_VERSION}/community" \
     --no-cache --allow-untrusted --initdb -p ${ROOT} ${PACKAGES_INSTALL}
 
 [ ! -z "${HOOK_RUN_AFTER_APK}" ] && ${HOOK_RUN_AFTER_APK}
@@ -34,16 +32,16 @@ mount -o bind /tmp ${ROOT}/tmp
 # Create r/w mount point
 mkdir -p ${ROOT}/data
 
-cp ${SRC}/${ARCH}/docker.confd ${ROOT}/etc/conf.d/docker
-cp ${SRC}/${ARCH}/containers.initd ${ROOT}/etc/init.d/containers
-cp ${SRC}/${ARCH}/expand-data.confd ${ROOT}/etc/conf.d/expand-data
-cp ${SRC}/${ARCH}/expand-data.initd ${ROOT}/etc/init.d/expand-data
+cp "${DOCKER_CONFD_PATH}" ${ROOT}/etc/conf.d/docker
+cp "${CONTAINERS_INITD_PATH}" ${ROOT}/etc/init.d/containers
+cp "${EXPAND_DATA_CONFD_PATH}" ${ROOT}/etc/conf.d/expand-data
+cp "${EXPAND_DATA_INITD_PATH}" ${ROOT}/etc/init.d/expand-data
 chmod +x ${ROOT}/etc/init.d/containers
 chmod +x ${ROOT}/etc/init.d/expand-data
 
 # This will be useful
-if [ -f ${SRC}/${ARCH}/resolv.conf ]; then
-    cp ${SRC}/${ARCH}/resolv.conf ${ROOT}/etc/resolv.conf
+if [ -f "${RESOLV_CONF_PATH}" ]; then
+    cp "${RESOLV_CONF_PATH}" ${ROOT}/etc/resolv.conf
 else
     echo -e "nameserver 8.8.8.8\nnameserver 8.8.4.4\n" > ${ROOT}/etc/resolv.conf
 fi
@@ -51,11 +49,11 @@ mkdir -p ${ROOT}/etc/udhcpc
 echo 'RESOLV_CONF="NO"' > ${ROOT}/etc/udhcpc/udhcpc.conf
 
 # Append to /etc files
-[ -f ${SRC}/${ARCH}/fstab.append ] && cat ${SRC}/${ARCH}/fstab.append >> ${ROOT}/etc/fstab
+[ -f "${FSTAB_APPEND_PATH}" ] && cat "${FSTAB_APPEND_PATH}" >> ${ROOT}/etc/fstab
 
 # Append modules for auto-loading
 for mod in ${MODULES_LOAD}; do
-    echo ${mod} >> ${ROOT}/etc/modules
+    echo "${mod}" >> ${ROOT}/etc/modules
 done
 
 if [ ! -z "${NET_ETH}" ]; then
@@ -71,8 +69,8 @@ EOF
     cd ${ROOT}/etc/network && ln -sf /data/link_/etc/network/interfaces interfaces
 fi
 
-echo VERSION=\"${VERSION}\" > ${ROOT}/etc/release
-echo ARCH=\"${ARCH}\" >> ${ROOT}/etc/release
+echo "VERSION=\"${VERSION}\"" > ${ROOT}/etc/release
+echo "ARCH=\"${ARCH}\"" >> ${ROOT}/etc/release
 echo kernel.printk = 2 4 1 7 > ${ROOT}/etc/sysctl.d/local.conf
 
 # NOTE: this is fixed in alpine 3.19:
@@ -100,14 +98,14 @@ if [ ! -z "${DOCKER_PULL}" ]; then
     # Pull images and build default manifest...
     echo > /tmp/containers.manifest
     for image_tag in ${DOCKER_PULL}; do
-        docker -H unix://${ROOT}${SOCK} pull ${image_tag}
-        echo ${image_tag} >> /tmp/containers.manifest
+        docker -H unix://${ROOT}${SOCK} pull "${image_tag}"
+        echo "${image_tag}" >> /tmp/containers.manifest
     done
 
     # Use manifest provided in src, otherwise use the default one we generated
     # in the previous step.
-    if [ -f ${SRC}/${ARCH}/containers.manifest ]; then
-        cp ${SRC}/${ARCH}/containers.manifest ${ROOT}/etc/containers.manifest
+    if [ -f "${CONTAINERS_MANIFEST_PATH}" ]; then
+        cp "${CONTAINERS_MANIFEST_PATH}" ${ROOT}/etc/containers.manifest
     else
         cp /tmp/containers.manifest ${ROOT}/etc/containers.manifest
     fi
@@ -115,8 +113,8 @@ if [ ! -z "${DOCKER_PULL}" ]; then
     docker -H unix://${ROOT}${SOCK} image ls
 
     # Kill dockerd and wait for it to exit.
-    kill ${PID} > /dev/null 2>&1
-    while kill -0 ${PID} > /dev/null 2>&1; do
+    kill "${PID}" > /dev/null 2>&1
+    while kill -0 "${PID}" > /dev/null 2>&1; do
         sleep 0.1
     done
 
@@ -126,7 +124,7 @@ fi
 
 # Enable services
 for service in ${SERVICES_ENABLE}; do
-    chroot ${ROOT} /sbin/rc-update add ${service}
+    chroot ${ROOT} /sbin/rc-update add "${service}"
 done
 
 # Clean up mounts
@@ -134,6 +132,6 @@ umount ${ROOT}/dev
 umount ${ROOT}/proc
 umount ${ROOT}/tmp
 
-cd ${ROOT}
-tar -C ${ROOT} -czf ${OUT}/${OUTPUT} .
-ls -lah ${OUT}/${OUTPUT}
+cd ${ROOT} || exit 1
+tar -C ${ROOT} -czf "${OUT}/${OUTPUT}" .
+ls -lah "${OUT}/${OUTPUT}"

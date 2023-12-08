@@ -5,7 +5,9 @@ OWNER?=$(shell id -u)
 
 VERSION?=$(shell git tag | tail -n 1)
 
-include src/${CONFIG}/config
+BUILD_ROOT=$(shell pwd)
+
+include ${BUILD_ROOT}/src/${CONFIG}/config.mak
 
 .PHONY: build builder out/disk.img
 
@@ -21,6 +23,7 @@ out/rootfs-${BOARD_NAME}-${ARCH}-${VERSION}.tar.gz: out
 		-e VERSION=${VERSION} \
 		-e SRC=/var/lib/homeland/src \
 		-e OUT=/var/lib/homeland/out \
+		-e BUILD_ROOT=/var/lib/homeland \
 		-v ${PWD}/out:/var/lib/homeland/out \
 		-v ${PWD}/src:/var/lib/homeland/src:ro \
 		-v ${PWD}/entrypoint.sh:/entrypoint.sh:ro alpine:${ALPINE_VERSION} \
@@ -37,6 +40,7 @@ out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img: out/rootfs-${BOARD_NAME}-${ARCH}-
 		-e VERSION=${VERSION} \
 		-e SRC=/var/lib/homeland/src \
 		-e OUT=/var/lib/homeland/out \
+		-e BUILD_ROOT=/var/lib/homeland \
 		-v ${PWD}/out:/var/lib/homeland/out \
 		-v ${PWD}/src:/var/lib/homeland/src:ro \
 		-v ${PWD}/entrypoint.sh:/entrypoint.sh:ro alpine:${ALPINE_VERSION} \

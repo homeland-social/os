@@ -9,14 +9,14 @@ PACKAGES_INSTALL="${PACKAGES_INSTALL} docker-engine alpine-base grub linux-${BOA
 SERVICES_ENABLE="${SERVICES_ENABLE} networking modules docker expand-data sysctl"
 
 if [ "${NET_WIFI}" == "yes" ]; then
-    PACKAGES_INSTALL="${PACKAGES_INSTALL} iwd"
-    SERVICES_ENABLE="${SERVICES_ENABLE} iwd"
+    PACKAGES_INSTALL="${PACKAGES_INSTALL} wpa_supplicant wireless-tools hostapd dnsmasq dnsmasq-openrc"
+    SERVICES_ENABLE="${SERVICES_ENABLE} wpa_supplicant hostapd dnsmasq"
 fi
 
 ROOT=/tmp/root
 mkdir -p ${ROOT}
 mkdir -p ${ROOT}/etc/apk
-cp -vR /etc/apk ${ROOT}/etc/
+cp -R /etc/apk ${ROOT}/etc/
 
 apk add -U \
     -X ${ALPINE_MIRROR}v${ALPINE_VERSION}/main \

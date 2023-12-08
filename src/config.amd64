@@ -2,8 +2,14 @@ ARCH=amd64
 ALPINE_VERSION=3.18
 ALPINE_MIRROR=http://dl-cdn.alpinelinux.org/alpine/
 
+# Sizes in Megabytes, leave DATA_SIZE blank to grow
+DISK_SIZE=3072
+BOOT_SIZE=64
+ROOT_SIZE=384
+DATA_SIZE=
+
 BOARD_NAME=virt
-NET_WIFI=yes
+NET_WIFI=no
 NET_ETH=e1000
 PACKAGES_INSTALL="docker-cli docker-bash-completion"
 SERVICES_ENABLE=
@@ -17,4 +23,4 @@ HOOK_RUN_AFTER_FILES=
 # mkimage.sh hooks:
 HOOK_RUN_AFTER_LOSETUP=
 HOOK_RUN_BEFORE_UMOUNT=
-HOOK_RUN_BEFORE_TAR=/bin/bash
+HOOK_RUN_BEFORE_TAR=

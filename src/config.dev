@@ -1,19 +1,19 @@
-ARCH=arm64
+ARCH=amd64
 ALPINE_VERSION=3.18
 ALPINE_MIRROR=http://dl-cdn.alpinelinux.org/alpine/
 
 # Sizes in Megabytes, leave DATA_SIZE blank to grow
-DISK_SIZE=3072
-BOOT_SIZE=64
-ROOT_SIZE=384
+DISK_SIZE=6144
+BOOT_SIZE=128
+ROOT_SIZE=2048
 DATA_SIZE=
 
-BOARD_NAME=rpi4
+BOARD_NAME=lts
 NET_WIFI=yes
 NET_ETH=e1000
-PACKAGES_INSTALL="docker-cli docker-bash-completion"
+PACKAGES_INSTALL="docker-cli docker-bash-completion usbutils go alpine-sdk"
 SERVICES_ENABLE=
-MODULES_LOAD=
+MODULES_LOAD=rt2800usb
 DOCKER_PULL=busybox:latest
 
 # mkrootfs.sh hooks:

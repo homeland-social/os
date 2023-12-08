@@ -4,5 +4,4 @@
 
 dummy       				/               ext4        defaults,ro 0 0
 tmpfs						/var/log		tmpfs		defaults 0 0
-/dev/sda1                   /boot           ext4        defaults 0 0
-/dev/sda4					/data			ext4		defaults 0 0
+/dev/sda3					/data			ext4		defaults 0 0

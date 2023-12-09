@@ -59,6 +59,8 @@ disk.img.gz: disk.img
 out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.vdi:
 	qemu-img convert -f raw -O vdi out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.vdi
 
+disk.vdi: out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.vdi
+
 out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.qcow2:
 	qemu-img convert -f raw -O qcow2 out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.qcow2
 

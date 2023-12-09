@@ -7,8 +7,8 @@ PACKAGES_INSTALL="${PACKAGES_INSTALL} docker-engine alpine-base grub linux-${BOA
 SERVICES_ENABLE="${SERVICES_ENABLE} networking modules docker expand-data sysctl"
 
 if [ "${NET_WIFI}" == "yes" ]; then
-    PACKAGES_INSTALL="${PACKAGES_INSTALL} wpa_supplicant wireless-tools hostapd dnsmasq dnsmasq-openrc"
-    SERVICES_ENABLE="${SERVICES_ENABLE} wpa_supplicant hostapd dnsmasq"
+    PACKAGES_INSTALL="${PACKAGES_INSTALL} iwd wireless-tools hostapd dnsmasq dnsmasq-openrc"
+    SERVICES_ENABLE="${SERVICES_ENABLE} iwd hostapd dnsmasq syslog"
 fi
 
 ROOT=/tmp/root
@@ -67,6 +67,17 @@ iface lo inet loopback
 iface eth0 inet dhcp
 EOF
     cd ${ROOT}/etc/network && ln -sf /data/link_/etc/network/interfaces interfaces
+fi
+if [[ "${PACKAGES_INSTALL}" == *"dnsmasq"* ]]; then
+    mkdir -p ${ROOT}/var/lib/misc
+    mkdir -p ${ROOT}/data/link_/var/lib/misc
+    touch ${ROOT}/data/link_/var/lib/misc
+    cp "${DNSMASQ_CONF_PATH}" ${ROOT}/etc/dnsmasq.conf
+    cd ${ROOT}/var/lib/misc && ln -sf /data/link_/var/lib/misc/dnsmasq.leases dnsmasq.leases
+fi
+if [[ "${PACKAGES_INSTALL}" == *"hostapd"* ]]; then
+    mkdir -p ${ROOT}/etc/hostapd
+    cp "${HOSTAPD_CONF_PATH}" ${ROOT}/etc/hostapd.conf
 fi
 
 echo "VERSION=\"${VERSION}\"" > ${ROOT}/etc/release
@@ -133,5 +144,5 @@ umount ${ROOT}/proc
 umount ${ROOT}/tmp
 
 cd ${ROOT} || exit 1
-tar -C ${ROOT} -czf "${OUT}/${OUTPUT}" .
-ls -lah "${OUT}/${OUTPUT}"
+tar -C ${ROOT} -czf ${OUT}/${OUTPUT} .
+ls -lah ${OUT}/${OUTPUT}

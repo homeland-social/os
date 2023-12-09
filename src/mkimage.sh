@@ -92,7 +92,7 @@ fi
 [ ! -z "${HOOK_RUN_BEFORE_TAR}" ] && ${HOOK_RUN_BEFORE_TAR}
 
 # Extract files onto filesystems
-cd /tmp/root0 && tar xzf "/var/lib/homeland/out/${INPUT}" > /dev/null 2>&1
+cd /tmp/root0 && tar xzf "/var/lib/homeland/out/${INPUT}" > /dev/null
 cd /
 
 sync

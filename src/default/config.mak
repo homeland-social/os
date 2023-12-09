@@ -15,9 +15,11 @@ export BOARD_NAME=virt
 export NET_WIFI=no
 export NET_ETH=e1000
 export PACKAGES_INSTALL=docker-cli docker-bash-completion
+# TODO: enable these services; hostapd wpa_supplicant dnsmasq
+# However, need configs that limit them to wlan0
 export SERVICES_ENABLE=
 export MODULES_LOAD=
-export DOCKER_PULL=selfhostedpro/yacht:latest
+export DOCKER_PULL=busybox:latest
 
 # Important files which are copied to the root fs.
 export CONTAINERS_INITD_PATH=default/containers.initd.sh
@@ -27,7 +29,8 @@ export EXPAND_DATA_CONFD_PATH=default/expand-data.confd
 export EXPAND_DATA_INITD_PATH=default/expand-data.initd.sh
 export FSTAB_APPEND_PATH=default/fstab.append
 export RESOLV_CONF_PATH=
-
+export HOSTAPD_CONF_PATH=default/hostapd.conf
+export DNSMASQ_CONF_PATH=default/dnsmasq.conf
 # You can run any command at various stages of the build for debugging
 # purposes. i.e. setting any of the following to /bin/bash will open a
 # manhole.

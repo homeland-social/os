@@ -12,7 +12,6 @@ export ROOT_SIZE=384
 export DATA_SIZE=
 
 export BOARD_NAME=virt
-export NET_WIFI=no
 export NET_ETH=e1000
 export PACKAGES_INSTALL=docker-cli docker-bash-completion
 export SERVICES_ENABLE=

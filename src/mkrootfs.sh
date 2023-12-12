@@ -23,10 +23,14 @@ apk add -U \
 
 [ ! -z "${HOOK_RUN_AFTER_APK}" ] && ${HOOK_RUN_AFTER_APK}
 
+mkdir -p ${ROOT}/dev
+mkdir -p ${ROOT}/proc
+mkdir -p ${ROOT}/sys
 mkdir -p ${ROOT}/var/lib/homeland/
 
 mount -o bind /dev ${ROOT}/dev
 mount -o bind /proc ${ROOT}/proc
+mount -o bind /sys ${ROOT}/sys
 mount -o bind /tmp ${ROOT}/tmp
 
 # Create r/w mount point

@@ -3,7 +3,7 @@
 OUTPUT=$1
 
 MODULES_LOAD="${MODULES_LOAD} ${NET_ETH}"
-PACKAGES_INSTALL="${PACKAGES_INSTALL} docker-engine alpine-base grub linux-${BOARD_NAME} cloud-utils-growpart e2fsprogs e2fsprogs-extra"
+PACKAGES_INSTALL="${PACKAGES_INSTALL} docker-engine docker-cli docker-cli-compose alpine-base grub linux-${BOARD_NAME} cloud-utils-growpart e2fsprogs e2fsprogs-extra"
 SERVICES_ENABLE="${SERVICES_ENABLE} networking modules docker expand-data sysctl"
 
 IMAGE=${OUT}/${OUTPUT}
@@ -199,6 +199,9 @@ if [ ! -z "${DOCKER_PULL}" ]; then
     else
         cp /tmp/containers.manifest ${ROOT}/etc/containers.manifest
     fi
+    if [ -f "${CONTAINERS_COMPOSE_PATH}" ]; then
+        cp "${CONTAINERS_COMPOSE_PATH}" ${ROOT}/etc/containers-compose.yml
+    fi
 
     docker -H unix://${ROOT}${SOCK} image ls
 
@@ -257,3 +260,8 @@ done
 dd if="/dev/mapper/${LOOP_NAME}p2" of="${OUT}/part-${BOARD_NAME}-${ARCH}-${VERSION}.img" bs=4096
 
 kpartx -d -v "${LOOP}"
+
+dmsetup remove /dev/mapper/${LOOP_NAME}p1
+dmsetup remove /dev/mapper/${LOOP_NAME}p2
+dmsetup remove /dev/mapper/${LOOP_NAME}p3
+dmsetup remove /dev/mapper/${LOOP_NAME}p4

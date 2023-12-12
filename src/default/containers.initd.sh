@@ -25,19 +25,13 @@ wait_for_docker() {
     return ${ret}
 }
 
-start() {
-    ebegin "Starting docker containers"
-    wait_for_docker
-
-    local ret=$?
-    if [ ${ret} -ne 0 ]; then
-        eend ${ret}
-        return ${ret}
-    fi
+start_manifest() {
+    local i=0
+    local ret=0
+    local has_errors=0
 
     eindent
-    local i=0
-    local has_errors=0
+
     # shellcheck disable=SC2002
     cat /etc/containers.manifest | \
     grep -vE '#|^$' | \
@@ -59,18 +53,43 @@ start() {
         veend ${ret}
         i=$((i + 1))
     done
+
     eoutdent
-    eend ${has_errors}
+    return ${has_errors}
 }
 
-stop() {
-    ebegin "Stopping docker containers"
-    wait_for_docker
-    eindent
+start_compose() {
+    docker-compose -f /etc/containers-compose.yml up
+    return $?
+}
 
+start() {
+    ebegin "Starting docker containers"
+    wait_for_docker
+    local ret=$?
+
+    if [ ${ret} -ne 0 ]; then
+        eend ${ret}
+        return
+    fi
+
+    if [ -f /etc/containers-compose.yml ]; then
+        start_compose
+        ret=$?
+    else
+        start_manifest
+        ret=$?
+    fi
+
+    eend ${ret}
+}
+
+stop_manifest() {
     local i=0
     local ret=0
     local has_errors=0
+
+    eindent
     # shellcheck disable=SC2002
     cat /etc/containers.manifest | \
     grep -vE '#|^$' | \
@@ -89,6 +108,29 @@ stop() {
         veend ${ret}
         i=$((i + 1))
     done
+
     eoutdent
-    eend ${has_errors}
+    return ${has_errors}
+}
+
+stop_compose() {
+    docker-compose -f /etc/containers-compose.yml down
+    return $?
+}
+
+stop() {
+    ebegin "Stopping docker containers"
+    wait_for_docker
+
+    local ret=0
+
+    if [ -f /etc/containers-compose.yml ]; then
+        stop_compose
+        ret=$?
+    else
+        stop_manifest
+        ret=$?
+    fi
+
+    eend ${ret}
 }

@@ -13,7 +13,7 @@ export DATA_SIZE=
 
 export BOARD_NAME=virt
 export NET_ETH=e1000
-export PACKAGES_INSTALL=docker-cli docker-bash-completion
+export PACKAGES_INSTALL=
 export SERVICES_ENABLE=
 export MODULES_LOAD=
 export DOCKER_PULL=selfhostedpro/yacht:latest
@@ -21,6 +21,7 @@ export DOCKER_PULL=selfhostedpro/yacht:latest
 # Important files which are copied to the root fs.
 export CONTAINERS_INITD_PATH=default/containers.initd.sh
 export CONTAINERS_MANIFEST_PATH=default/containers.manifest
+export CONTAINERS_COMPOSE_PATH=
 export DOCKER_CONFD_PATH=default/docker.confd
 export EXPAND_DATA_CONFD_PATH=default/expand-data.confd
 export EXPAND_DATA_INITD_PATH=default/expand-data.initd.sh

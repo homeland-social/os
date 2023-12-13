@@ -122,16 +122,16 @@ mount -o bind /tmp ${ROOT}/tmp
 # Create r/w mount point
 mkdir -p ${ROOT}/data
 
-cp "${DOCKER_CONFD_PATH}" ${ROOT}/etc/conf.d/docker
-cp "${CONTAINERS_INITD_PATH}" ${ROOT}/etc/init.d/containers
-cp "${EXPAND_DATA_CONFD_PATH}" ${ROOT}/etc/conf.d/expand-data
-cp "${EXPAND_DATA_INITD_PATH}" ${ROOT}/etc/init.d/expand-data
+cp "${SRC}/${DOCKER_CONFD_PATH}" ${ROOT}/etc/conf.d/docker
+cp "${SRC}/${CONTAINERS_INITD_PATH}" ${ROOT}/etc/init.d/containers
+cp "${SRC}/${EXPAND_DATA_CONFD_PATH}" ${ROOT}/etc/conf.d/expand-data
+cp "${SRC}/${EXPAND_DATA_INITD_PATH}" ${ROOT}/etc/init.d/expand-data
 chmod +x ${ROOT}/etc/init.d/containers
 chmod +x ${ROOT}/etc/init.d/expand-data
 
 # This will be useful
-if [ -f "${RESOLV_CONF_PATH}" ]; then
-    cp "${RESOLV_CONF_PATH}" ${ROOT}/etc/resolv.conf
+if [ -f "${SRC}/${RESOLV_CONF_PATH}" ]; then
+    cp "${SRC}/${RESOLV_CONF_PATH}" ${ROOT}/etc/resolv.conf
 else
     echo -e "nameserver 8.8.8.8\nnameserver 8.8.4.4\n" > ${ROOT}/etc/resolv.conf
 fi
@@ -139,7 +139,7 @@ mkdir -p ${ROOT}/etc/udhcpc
 echo 'RESOLV_CONF="NO"' > ${ROOT}/etc/udhcpc/udhcpc.conf
 
 # Append to /etc files
-[ -f "${FSTAB_APPEND_PATH}" ] && cat "${FSTAB_APPEND_PATH}" >> ${ROOT}/etc/fstab
+[ -f "${SRC}/${FSTAB_APPEND_PATH}" ] && cat "${SRC}/${FSTAB_APPEND_PATH}" >> ${ROOT}/etc/fstab
 
 # Append modules for auto-loading
 for mod in ${MODULES_LOAD}; do
@@ -170,9 +170,10 @@ chroot ${ROOT} mkdir -p /data//var/lib/docker
 
 [ ! -z "${HOOK_RUN_AFTER_FILES}" ] && ${HOOK_RUN_AFTER_FILES}
 
-if [ ! -z "${DOCKER_PULL}" ]; then
+if [ -f "${SRC}/${CONTAINERS_COMPOSE_PATH}" ]; then
     SOCK="/tmp/docker.sock"
     SERVICES_ENABLE="${SERVICES_ENABLE} containers"
+    cp "${SRC}/${CONTAINERS_COMPOSE_PATH}" ${ROOT}/etc/containers-compose.yml
 
     # Run dockerd inside the chroot.
     chroot ${ROOT} /usr/bin/dockerd --storage-driver=btrfs \
@@ -185,23 +186,8 @@ if [ ! -z "${DOCKER_PULL}" ]; then
     done
     PID=$(cat ${ROOT}/tmp/docker.pid)
 
-    # Pull images and build default manifest...
-    echo > /tmp/containers.manifest
-    for image_tag in ${DOCKER_PULL}; do
-        docker -H unix://${ROOT}${SOCK} pull "${image_tag}"
-        echo "${image_tag}" >> /tmp/containers.manifest
-    done
-
-    # Use manifest provided in src, otherwise use the default one we generated
-    # in the previous step.
-    if [ -f "${CONTAINERS_MANIFEST_PATH}" ]; then
-        cp "${CONTAINERS_MANIFEST_PATH}" ${ROOT}/etc/containers.manifest
-    else
-        cp /tmp/containers.manifest ${ROOT}/etc/containers.manifest
-    fi
-    if [ -f "${CONTAINERS_COMPOSE_PATH}" ]; then
-        cp "${CONTAINERS_COMPOSE_PATH}" ${ROOT}/etc/containers-compose.yml
-    fi
+    # Pull images ...
+    DOCKER_HOST=unix://${ROOT}${SOCK} docker-compose -f ${ROOT}/etc/containers-compose.yml pull
 
     docker -H unix://${ROOT}${SOCK} image ls
 
@@ -260,8 +246,3 @@ done
 dd if="/dev/mapper/${LOOP_NAME}p2" of="${OUT}/part-${BOARD_NAME}-${ARCH}-${VERSION}.img" bs=4096
 
 kpartx -d -v "${LOOP}"
-
-dmsetup remove /dev/mapper/${LOOP_NAME}p1
-dmsetup remove /dev/mapper/${LOOP_NAME}p2
-dmsetup remove /dev/mapper/${LOOP_NAME}p3
-dmsetup remove /dev/mapper/${LOOP_NAME}p4

@@ -59,6 +59,7 @@ qemu-up:
 		-device usb-host,id=ralink,bus=ehci.0,vendorid=0x148f,productid=0x5370
 
 # https://www.virtualbox.org/manual/ch08.html
+# https://www.paulligocki.com/create-virtualbox-vm-from-command-line/#Configuring-a-Virtual-Network-Adapter
 vbox-create:
 	VBoxManage createvm --name=${VM_NAME} --register --ostype=linux
 	VBoxManage modifyvm ${VM_NAME} --cpus 1 --memory 1024 --vram 16

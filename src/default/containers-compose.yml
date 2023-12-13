@@ -1,0 +1,7 @@
+version: "3"
+
+services:
+  yacht:
+    image: selfhostedpro/yacht:latest
+    ports:
+      - 80:8000

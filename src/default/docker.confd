@@ -23,4 +23,4 @@
 #DOCKERD_BINARY="/usr/bin/dockerd"
 
 # any other random options you want to pass to docker
-DOCKER_OPTS="--data-root=/data/var/lib/docker --storage-driver=vfs --log-driver=syslog --log-opt=syslog-address=udp://127.0.0.1:5514"
+DOCKER_OPTS="--data-root=/data/var/lib/docker --storage-driver=btrfs --log-driver=syslog --log-opt=syslog-address=udp://127.0.0.1:5514"

@@ -17,6 +17,9 @@ jobs:
 
     - name: Build
       run: VERSION=${GITHUB_REF#refs/*/} make disk.img
+      
+    - name: Checksum & compress
+      run: make disk.img.sha256 part.img.sha256 disk.img.gz part.img.gz
 
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2

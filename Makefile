@@ -36,10 +36,16 @@ out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img:
 
 disk.img: out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img
 
-disk.img.gz: disk.img
+disk.img.sha256:
 	sha256sum out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img > out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img.sha256sum
+
+part.img.sha256:
 	sha256sum out/part-${BOARD_NAME}-${ARCH}-${VERSION}.img > out/part-${BOARD_NAME}-${ARCH}-${VERSION}.img.sha256sum
+
+disk.img.gz: disk.img
 	cat out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img | gzip -9 > out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img.gz
+
+part.img.gz:
 	cat out/part-${BOARD_NAME}-${ARCH}-${VERSION}.img | gzip -9 > out/part-${BOARD_NAME}-${ARCH}-${VERSION}.img.gz
 
 out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.vdi:

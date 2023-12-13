@@ -237,7 +237,7 @@ umount ${ROOT}/sys
 umount ${ROOT}/tmp
 
 # Umount and clean up.
-for mount in /tmp/root0/boot /tmp/root0/data /tmp/root0 /tmp/root1; do
+for mount in /tmp/root0/boot /tmp/root0/data /tmp/root1 /tmp/root0; do
     while ! umount ${mount}; do
         sleep 3.0
     done

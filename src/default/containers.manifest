@@ -1,4 +1,0 @@
-# This file is parsed by containers.initd => /etc/init.d/containers
-# selfhostedpro/yacht:latest /bin/sleep 60
-
-busybox:latest /bin/sleep 60

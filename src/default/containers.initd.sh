@@ -25,70 +25,44 @@ wait_for_docker() {
     return ${ret}
 }
 
+start_compose() {
+    docker-compose -f /etc/containers-compose.yml up -d
+    return $?
+}
+
 start() {
     ebegin "Starting docker containers"
     wait_for_docker
-
     local ret=$?
+
     if [ ${ret} -ne 0 ]; then
         eend ${ret}
-        return ${ret}
+        return
     fi
 
-    eindent
-    local i=0
-    local has_errors=0
-    # shellcheck disable=SC2002
-    cat /etc/containers.manifest | \
-    grep -vE '#|^$' | \
-    while read -r image cmd; do
-        local name="auto${i}"
-        vebegin "Starting ${name}"
-        ret=0
-        id=$(docker ps -a -q -f name=${name})
-        if [ -z "${id}" ]; then
-            docker run --restart=always -d --name ${name} ${image} ${cmd} > /dev/null 2>&1
-            ret=$?
-        else
-            docker start "${id}" > /dev/null 2>&1
-            ret=$?
-        fi
-        if [ ${ret} -ne 0 ]; then
-            has_errors=1
-        fi
-        veend ${ret}
-        i=$((i + 1))
-    done
-    eoutdent
-    eend ${has_errors}
+    if [ -f /etc/containers-compose.yml ]; then
+        start_compose
+        ret=$?
+    fi
+
+    eend ${ret}
+}
+
+stop_compose() {
+    docker-compose -f /etc/containers-compose.yml down
+    return $?
 }
 
 stop() {
     ebegin "Stopping docker containers"
     wait_for_docker
-    eindent
 
-    local i=0
     local ret=0
-    local has_errors=0
-    # shellcheck disable=SC2002
-    cat /etc/containers.manifest | \
-    grep -vE '#|^$' | \
-    while read -r image cmd; do
-        local name="auto${i}"
-        vebegin "Stopping ${name}"
-        ret=0
-        id=$(docker ps -q -f name=${name})
-        if [ ! -z "${id}" ]; then
-            docker stop "${id}" > /dev/null 2>&1
-            ret=$?
-            if [ ${ret} -ne 0 ]; then
-                has_errors=1
-            fi
-        fi
-        veend ${ret}
-        i=$((i + 1))
-    done
-    eoutdent
-    eend ${has_errors}
+
+    if [ -f /etc/containers-compose.yml ]; then
+        stop_compose
+        ret=$?
+    fi
+
+    eend ${ret}
 }

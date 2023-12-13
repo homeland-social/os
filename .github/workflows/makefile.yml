@@ -13,17 +13,13 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y jq
-        wget https://downloads.nestybox.com/sysbox/releases/v0.6.2/sysbox-ce_0.6.2-0.linux_amd64.deb
-        sudo apt install -y ./sysbox-ce_0.6.2-0.linux_amd64.deb
-
-    - name: Build builder
-      run: make builder
+      run: make deps
 
     - name: Build
-      run: VERSION=${GITHUB_REF#refs/*/} make disk.img.gz
+      run: VERSION=${GITHUB_REF#refs/*/} make disk.img
+      
+    - name: Checksum & compress
+      run: make disk.img.sha256 part.img.sha256 disk.img.gz part.img.gz
 
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2

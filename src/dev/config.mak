@@ -11,7 +11,6 @@ export ROOT_SIZE=6144
 export DATA_SIZE=
 
 export BOARD_NAME=lts
-export NET_WIFI=yes
 export NET_ETH=e1000
 export PACKAGES_INSTALL=docker-cli docker-bash-completion usbutils go alpine-sdk nfs-utils nodejs
 export MODULES_LOAD=rt2800usb

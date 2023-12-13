@@ -246,3 +246,5 @@ done
 dd if="/dev/mapper/${LOOP_NAME}p2" of="${OUT}/part-${BOARD_NAME}-${ARCH}-${VERSION}.img" bs=4096
 
 kpartx -d -v "${LOOP}"
+
+chown -R ${OWNER}:${OWNER} ${OUT}

@@ -2,10 +2,9 @@ SHELL:=/bin/bash
 CONFIG?=amd64
 VM_NAME?=homeland-test
 OWNER?=$(shell id -u)
-
 VERSION?=$(shell git tag | tail -n 1)
-
 BUILD_ROOT=$(shell pwd)
+SOURCES=$(shell find src/)
 
 include ${BUILD_ROOT}/src/${CONFIG}/config.mak
 
@@ -19,7 +18,7 @@ all: disk.img.gz
 out:
 	mkdir out
 
-out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img:
+out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img: $(SOURCES)
 	sudo docker run --privileged --platform=${ARCH} \
 		-e ARCH=${ARCH} \
 		-e CONFIG=${CONFIG} \
@@ -27,31 +26,41 @@ out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img:
 		-e SRC=/var/lib/homeland/src \
 		-e OUT=/var/lib/homeland/out \
 		-e BUILD_ROOT=/var/lib/homeland \
+		-e OWNER=${OWNER} \
 		-v ${PWD}/out:/var/lib/homeland/out \
 		-v ${PWD}/src:/var/lib/homeland/src:ro \
 		-v ${PWD}/entrypoint.sh:/entrypoint.sh:ro alpine:${ALPINE_VERSION} \
 		/var/lib/homeland/src/setup.sh \
 		/var/lib/homeland/src/mkimage.sh disk-${BOARD_NAME}-${ARCH}-${VERSION}.img
-	sudo chown -R ${OWNER}:${OWNER} out
 
 disk.img: out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img
 
-disk.img.sha256:
+out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img.sha256: out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img
 	sha256sum out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img > out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img.sha256sum
 
-part.img.sha256:
+disk.img.sha256: out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img.sha256
+
+out/part-${BOARD_NAME}-${ARCH}-${VERSION}.img.sha256: out/part-${BOARD_NAME}-${ARCH}-${VERSION}.img
 	sha256sum out/part-${BOARD_NAME}-${ARCH}-${VERSION}.img > out/part-${BOARD_NAME}-${ARCH}-${VERSION}.img.sha256sum
 
-disk.img.gz: disk.img
+part.img.sha256: out/part-${BOARD_NAME}-${ARCH}-${VERSION}.img.sha256
+
+out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img.gz: out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img
 	cat out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img | gzip -9 > out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img.gz
 
-part.img.gz:
+disk.img.gz: out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img.gz
+
+out/part-${BOARD_NAME}-${ARCH}-${VERSION}.img.gz: out/part-${BOARD_NAME}-${ARCH}-${VERSION}.img
 	cat out/part-${BOARD_NAME}-${ARCH}-${VERSION}.img | gzip -9 > out/part-${BOARD_NAME}-${ARCH}-${VERSION}.img.gz
 
-out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.vdi:
+part.img.gz: out/part-${BOARD_NAME}-${ARCH}-${VERSION}.img.gz
+
+out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.vdi: out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img
 	qemu-img convert -f raw -O vdi out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.vdi
 
-out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.qcow2:
+disk.vdi: out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.vdi
+
+out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.qcow2: out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img
 	qemu-img convert -f raw -O qcow2 out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.qcow2
 
 disk.qcow2: out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.qcow2

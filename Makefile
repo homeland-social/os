@@ -32,7 +32,7 @@ out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img:
 		-v ${PWD}/entrypoint.sh:/entrypoint.sh:ro alpine:${ALPINE_VERSION} \
 		/var/lib/homeland/src/setup.sh \
 		/var/lib/homeland/src/mkimage.sh disk-${BOARD_NAME}-${ARCH}-${VERSION}.img
-	sudo chown ${OWNER}:${OWNER} out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img
+	sudo chown -R ${OWNER}:${OWNER} out
 
 disk.img: out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img
 

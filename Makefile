@@ -20,7 +20,7 @@ out:
 	mkdir out
 
 out/disk-${BOARD_NAME}-${ARCH}-${VERSION}.img:
-	sudo docker run -ti --privileged --platform=${ARCH} \
+	sudo docker run --privileged --platform=${ARCH} \
 		-e ARCH=${ARCH} \
 		-e CONFIG=${CONFIG} \
 		-e VERSION=${VERSION} \

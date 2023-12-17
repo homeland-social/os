@@ -2,6 +2,14 @@ version: "3"
 
 services:
   yacht:
-    image: selfhostedpro/yacht:latest
+    image: homelandsocial/yacht:latest
     ports:
       - 80:8000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /data/containers/yacht:/config
+
+  txwifi:
+    image: homelandsocial/txwifi:latest
+    privileged: true
+    network_mode: host
